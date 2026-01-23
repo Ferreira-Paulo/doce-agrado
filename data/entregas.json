@@ -1,0 +1,43 @@
+[
+  {
+    "parceiro": "finiespetinhos",
+    "entregas": [
+      {
+        "data": "2026-12-17",
+        "quantidade": 58,
+        "valor_unitario": 3.5,
+        "pagamentos": [
+          {
+            "valor": 0.5,
+            "data": "2025-12-17"
+          }
+        ]
+      },
+      {
+        "data": "2026-01-09",
+        "quantidade": "24",
+        "valor_unitario": "3.5",
+        "pagamentos": []
+      }
+    ]
+  },
+  {
+    "parceiro": "bugigangas",
+    "entregas": [
+      {
+        "data": "2026-01-09",
+        "quantidade": 60,
+        "valor_unitario": 3.5,
+        "pagamentos": [
+        ]
+      },
+      {
+        "data": "2026-01-15",
+        "quantidade": 31,
+        "valor_unitario": 3.5,
+        "pagamentos": [
+        ]
+      }
+    ]
+  }
+]

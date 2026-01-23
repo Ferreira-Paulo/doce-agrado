@@ -1,21 +1,21 @@
-import Image from "next/image";
+import Link from "next/link";
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-[#FFF9FB] font-sans text-[#4A0E2E]">
-      {/* Navbar */}
       <nav className="flex justify-between items-center px-8 py-6 max-w-7xl mx-auto">
         <img src="../../img/logo-doce-agrado.png" alt="Doce Agrado" className="h-16" />
         <div className="space-x-8 font-medium">
           <a href="#sobre" className="hover:text-[#D1328C]">Sobre</a>
-          <a href="#parceria" className="hover:text-[#D1328C]">Parceria</a>
-          <button className="bg-[#D1328C] text-white px-6 py-2 rounded-full hover:bg-[#b52a79] transition">
-            Área do Parceiro
-          </button>
+          <a href="#parceiro" className="hover:text-[#D1328C]">Parceria</a>
+          <Link href="/dashboard">
+            <button className="bg-[#D1328C] text-white px-6 py-2 rounded-full hover:bg-[#b52a79] transition">
+              Área do Parceiro
+            </button>
+          </Link>
         </div>
       </nav>
 
-      {/* Hero Section */}
       <header className="max-w-7xl mx-auto px-8 py-16 flex flex-col md:flex-row items-center">
         <div className="md:w-1/2 space-y-6">
           <h1 className="text-5xl md:text-6xl font-bold leading-tight">

@@ -1,0 +1,32 @@
+[
+  {
+    "username": "fini espetinhos",
+    "senha": "brenerfini",
+    "nome": "Fini Espetinhos Steak House",
+    "role": "parceiro"
+  },
+  {
+    "username": "bugigangas",
+    "senha": "mauriciobugigangas",
+    "nome": "Bugiganga's Lanches & Boliche",
+    "role": "parceiro"
+  },
+  {
+    "username": "gameflix",
+    "senha": "cleisongameflix",
+    "nome": "Gameflix Pub Gamer",
+    "role": "parceiro"
+  },
+  {
+    "username": "na brasas",
+    "senha": "fabriciobrasa",
+    "nome": "Na Brasa's Hambúrgueria",
+    "role": "parceiro"
+  },
+  {
+    "username": "doce agrado",
+    "senha": "admin123",
+    "nome": "Doce Agrado",
+    "role": "admin"
+  }
+]

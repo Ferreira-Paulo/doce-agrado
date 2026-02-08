@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth/AuthContext";
 
 export default function Login() {
   const router = useRouter();
+  const { login } = useAuth();
 
   const [username, setUsername] = useState("");
   const [senha, setSenha] = useState("");
@@ -27,18 +29,23 @@ export default function Login() {
       return;
     }
 
-    localStorage.setItem("user", JSON.stringify(data));
+    // localStorage.setItem("user", JSON.stringify(data));
 
-    if (data.role === "admin") {
-      router.push("/admin");
-    } else {
-      router.push("/dashboard");
-    }
+    // if (data.role === "admin") {
+    //   router.push("/admin");
+    // } else {
+    //   router.push("/parceiro");
+    // }
+
+    login(data); // 👈 salva no localStorage + seta o state global
+
+    router.push(data.role === "admin" ? "/admin" : "/parceiro");
+
   }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#FFF9FB] px-4 md:flex-row md:px-8">
-      
+
       {/* Logo */}
       <img
         src="/img/logo-doce-agrado.png"
@@ -75,9 +82,18 @@ export default function Login() {
           <p className="text-red-600 text-sm mb-4 text-center">{erro}</p>
         )}
 
-        <button className="w-full bg-[#D1328C] text-white py-3 rounded-lg">
+        <button
+          type="submit"
+          className="w-full bg-[#D1328C] text-white py-3 rounded-lg
+                       font-semibold transition
+                       hover:bg-[#b52a79] active:scale-[0.98]"
+        >
           Entrar
         </button>
+        
+        <p className="mt-6 text-sm text-[#4A0E2E]/70 text-center">
+          Doce Agrado • Área exclusiva para parceiros
+        </p>
       </form>
     </div>
   );

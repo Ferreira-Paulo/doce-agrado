@@ -1,0 +1,80 @@
+export default function EntregaForm({
+  entregas,
+  novaEntrega,
+  setNovaEntrega,
+  onSubmit,
+  onCancel,
+  mode = "create",
+  submitLabel
+}) {
+  const label = submitLabel || (mode === "edit" ? "Salvar alterações" : "Registrar");
+
+  return (
+    <>
+      <h2 className="text-xl font-semibold mb-4 text-[#4A0E2E]">
+        {mode === "edit" ? "Editar Entrega" : "Registrar Entrega"}
+      </h2>
+
+      <div className="flex flex-col gap-4">
+        <select
+          className="px-4 py-3 border rounded-xl w-full"
+          value={novaEntrega.parceiro}
+          onChange={e =>
+            setNovaEntrega({ ...novaEntrega, parceiro: e.target.value })
+          }
+          disabled={mode === "edit"}
+        >
+          {entregas.map(p => (
+            <option key={p.parceiro} value={p.parceiro}>
+              {p.parceiro}
+            </option>
+          ))}
+        </select>
+
+        <input
+          type="number"
+          placeholder="Quantidade"
+          className="px-4 py-3 border rounded-xl w-full"
+          value={novaEntrega.quantidade}
+          onChange={e => setNovaEntrega({ ...novaEntrega, quantidade: e.target.value })}
+        />
+
+        {/* <input
+          type="number"
+          step="0.01"
+          placeholder="Valor unitário"
+          className="px-4 py-3 border rounded-xl w-full"
+          value={novaEntrega.valor_unitario}
+          onChange={e => setNovaEntrega({ ...novaEntrega, valor_unitario: e.target.value })}
+        /> */}
+
+        <input
+          type="date"
+          className="px-4 py-3 border rounded-xl w-full"
+          value={novaEntrega.data}
+          onChange={e => setNovaEntrega({ ...novaEntrega, data: e.target.value })}
+        />
+
+        <div className="flex gap-3">
+          {onCancel && (
+            <button
+              type="button"
+              onClick={onCancel}
+              className="w-full border border-black/10 text-[#4A0E2E] py-3 rounded-xl font-semibold hover:bg-black/[0.03] transition"
+            >
+              Cancelar
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={onSubmit}
+            className="w-full bg-[#D1328C] text-white py-3 rounded-xl font-semibold hover:bg-[#b52a79] transition"
+          >
+            {label}
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}

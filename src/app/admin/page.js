@@ -1,24 +1,52 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import entregasData from "../../../data/entregas.json";
 
-export default function AdminDashboard() {
+import PageHeader from "@/components/dashboard/PageHeader";
+import SummaryCards from "@/components/dashboard/SummaryCards";
+import { resumoEntregas, calcEntrega } from "@/components/utils/calc";
+
+import PagamentoForm from "./components/PagamentoForm";
+import EntregaForm from "./components/EntregaForm";
+import AdminFilters from "./components/AdminFilters";
+import PartnerSection from "./components/PartnerSection";
+
+import Modal from "@/components/ui/Modal";
+
+export default function AdminPage() {
   const router = useRouter();
+
   const [user, setUser] = useState(null);
   const [entregas, setEntregas] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Modal
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalType, setModalType] = useState(null); // "pagamento" | "entrega"
+
   const [novoPagamento, setNovoPagamento] = useState({
     parceiro: "",
     valor: "",
-    data: new Date().toISOString().slice(0, 10)
+    data: new Date().toISOString().slice(0, 10),
   });
+
   const [novaEntrega, setNovaEntrega] = useState({
     parceiro: "",
     quantidade: "",
     valor_unitario: "3.5",
-    data: new Date().toISOString().slice(0, 10)
+    data: new Date().toISOString().slice(0, 10),
   });
+
+  // filtros
+  const [busca, setBusca] = useState("");
+  const [filtroParceiro, setFiltroParceiro] = useState("__all");
+  const [filtroStatus, setFiltroStatus] = useState("todas"); // todas | pendentes | pagas
+
+  function closeModal() {
+    setModalOpen(false);
+    setModalType(null);
+  }
 
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
@@ -29,217 +57,241 @@ export default function AdminDashboard() {
 
     const parsedUser = JSON.parse(savedUser);
     if (parsedUser.role !== "admin") {
-      router.push("/dashboard");
+      router.push("/parceiro");
       return;
     }
 
     setUser(parsedUser);
-    setEntregas(entregasData);
-    setNovoPagamento(prev => ({ ...prev, parceiro: entregasData[0]?.parceiro || "" }));
-    setNovaEntrega(prev => ({ ...prev, parceiro: entregasData[0]?.parceiro || "" }));
+
+    (async () => {
+      try {
+        const res = await fetch("/api/entregas", { cache: "no-store" });
+        const data = await res.json();
+        const arr = Array.isArray(data) ? data : [];
+        setEntregas(arr);
+
+        const primeiroParceiro = arr?.[0]?.parceiro || "";
+        setNovoPagamento((p) => ({ ...p, parceiro: primeiroParceiro }));
+        setNovaEntrega((e) => ({ ...e, parceiro: primeiroParceiro }));
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, [router]);
 
-  if (!user) return <p>Carregando...</p>;
+  // resumo geral: soma todas as entregas de todos parceiros
+  const resumoGeral = useMemo(() => {
+    const todas = entregas.flatMap((p) => p.entregas || []);
+    return resumoEntregas(todas);
+  }, [entregas]);
 
-  // Função para registrar pagamento automático
-  const registrarPagamento = async () => {
-    if (!novoPagamento.valor || isNaN(novoPagamento.valor)) return;
+  const parceiros = useMemo(
+    () => entregas.map((p) => p.parceiro).sort((a, b) => a.localeCompare(b)),
+    [entregas]
+  );
+
+  // aplica filtros + busca + status
+  const entregasFiltradasPorParceiro = useMemo(() => {
+    const q = busca.trim().toLowerCase();
+
+    return entregas
+      .filter((p) =>
+        filtroParceiro === "__all" ? true : p.parceiro === filtroParceiro
+      )
+      .filter((p) => {
+        if (!q) return true;
+
+        const matchParceiro = p.parceiro.toLowerCase().includes(q);
+        const matchData = (p.entregas || []).some((e) =>
+          String(e.data).includes(q)
+        );
+
+        return matchParceiro || matchData;
+      })
+      .map((p) => {
+        let list = [...(p.entregas || [])].sort((a, b) =>
+          String(b.data).localeCompare(String(a.data))
+        );
+
+        if (filtroStatus !== "todas") {
+          list = list.filter((e) => {
+            const { saldo } = calcEntrega(e);
+            if (filtroStatus === "pendentes") return saldo > 0;
+            if (filtroStatus === "pagas") return saldo === 0;
+            return true;
+          });
+        }
+
+        return { ...p, entregas: list };
+      })
+      .filter((p) =>
+        filtroStatus === "todas" ? true : (p.entregas || []).length > 0
+      );
+  }, [entregas, busca, filtroParceiro, filtroStatus]);
+
+  async function registrarPagamento() {
+    if (!novoPagamento.parceiro) return;
+    if (!novoPagamento.valor || isNaN(Number(novoPagamento.valor))) return;
 
     const res = await fetch("/api/pagamentos", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(novoPagamento)
+      body: JSON.stringify({
+        ...novoPagamento,
+        valor: Number(novoPagamento.valor),
+      }),
     });
 
     const data = await res.json();
 
     if (data.success) {
       setEntregas(data.entregas);
-      setNovoPagamento(prev => ({ ...prev, valor: "", data: new Date().toISOString().slice(0, 10) }));
-    } else {
-      alert("Erro ao registrar pagamento: " + data.error);
-    }
-  };
+      setNovoPagamento((p) => ({
+        ...p,
+        valor: "",
+        data: new Date().toISOString().slice(0, 10),
+      }));
 
-  // Função para registrar nova entrega
-  const registrarEntrega = async () => {
-    if (!novaEntrega.quantidade || isNaN(novaEntrega.quantidade)) return;
+      // ✅ fecha modal ao salvar
+      closeModal();
+      return;
+    }
+
+    alert("Erro ao registrar pagamento: " + (data.error || "desconhecido"));
+  }
+
+  async function registrarEntrega() {
+    if (!novaEntrega.parceiro) return;
+    if (!novaEntrega.quantidade || isNaN(Number(novaEntrega.quantidade))) return;
 
     const res = await fetch("/api/entregas", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(novaEntrega)
+      body: JSON.stringify({
+        ...novaEntrega,
+        quantidade: Number(novaEntrega.quantidade),
+        valor_unitario: Number(novaEntrega.valor_unitario),
+      }),
     });
-    
+
     const data = await res.json();
-    
+
     if (data.success) {
       setEntregas(data.entregas);
-      setNovaEntrega(prev => ({ ...prev, quantidade: "", data: new Date().toISOString().slice(0, 10)}));
-    } else {
-      alert("Erro ao registrar entrega: " + data.error);
+      setNovaEntrega((e) => ({
+        ...e,
+        quantidade: "",
+        data: new Date().toISOString().slice(0, 10),
+      }));
+
+      // ✅ fecha modal ao salvar
+      closeModal();
+      return;
     }
-  };
+
+    alert("Erro ao registrar entrega: " + (data.error || "desconhecido"));
+  }
+
+  if (!user || loading) return <p className="p-8">Carregando...</p>;
+
+  const modalTitle =
+    modalType === "entrega"
+      ? "Nova Entrega"
+      : modalType === "pagamento"
+      ? "Novo Pagamento"
+      : "";
 
   return (
-    <div className="min-h-screen bg-[#FFF9FB] p-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-[#4A0E2E]">Bem-vindo, {user.nome} (Admin)</h1>
-        <button
-          onClick={() => {
+    <div className="min-h-screen bg-[#FFF9FB] px-4 py-8 md:px-8">
+      <div className="max-w-6xl mx-auto">
+        <PageHeader
+          title={`Olá, ${user.nome} (Admin)`}
+          subtitle="Gerencie entregas e pagamentos de todos os parceiros."
+          onLogout={() => {
             localStorage.removeItem("user");
             router.push("/login");
           }}
-          className="bg-[#D1328C] text-white px-6 py-2 rounded-lg hover:bg-[#b52a79] transition"
-        >
-          Sair
-        </button>
-      </div>
+        />
 
-      {/* Registrar Pagamento */}
-      <h2 className="text-2xl font-semibold mb-4">Registrar Pagamento</h2>
-      <div className="flex flex-col md:flex-row gap-4 items-center mb-8">
-        <select
-          className="px-4 py-2 border rounded-lg w-full md:w-1/4"
-          value={novoPagamento.parceiro}
-          onChange={e =>
-            setNovoPagamento({ ...novoPagamento, parceiro: e.target.value })
-          }
-        >
-          {entregas.map((p, idx) => (
-            <option key={idx} value={p.parceiro}>
-              {p.parceiro}
-            </option>
+        <SummaryCards resumo={resumoGeral} />
+
+        <div className="flex flex-col md:flex-row gap-3 mb-8">
+          <button
+            onClick={() => {
+              setModalType("entrega");
+              setModalOpen(true);
+            }}
+            className="bg-[#4A0E2E] text-white px-5 py-3 rounded-2xl font-semibold hover:opacity-95 transition"
+          >
+            + Nova Entrega
+          </button>
+
+          <button
+            onClick={() => {
+              setModalType("pagamento");
+              setModalOpen(true);
+            }}
+            className="bg-[#D1328C] text-white px-5 py-3 rounded-2xl font-semibold hover:bg-[#b52a79] transition"
+          >
+            + Novo Pagamento
+          </button>
+        </div>
+
+        <AdminFilters
+          parceiros={parceiros}
+          filtroParceiro={filtroParceiro}
+          setFiltroParceiro={setFiltroParceiro}
+          filtroStatus={filtroStatus}
+          setFiltroStatus={setFiltroStatus}
+          busca={busca}
+          setBusca={setBusca}
+        />
+
+        {/* Parceiros */}
+        <h2 className="text-2xl font-semibold text-[#4A0E2E] mb-4">
+          Parceiros
+        </h2>
+
+        <div className="space-y-6">
+          {entregasFiltradasPorParceiro.map((p) => (
+            <PartnerSection
+              key={p.parceiro}
+              parceiro={p.parceiro}
+              entregas={p.entregas || []}
+            />
           ))}
-        </select>
 
-        <input
-          type="number"
-          placeholder="Valor pago"
-          className="px-4 py-2 border rounded-lg w-full md:w-1/4"
-          value={novoPagamento.valor}
-          onChange={e => setNovoPagamento({ ...novoPagamento, valor: e.target.value })}
-        />
-
-        <input
-          type="date"
-          className="px-4 py-2 border rounded-lg w-full md:w-1/4"
-          value={novoPagamento.data}
-          onChange={e => setNovoPagamento({ ...novoPagamento, data: e.target.value })}
-        />
-
-        <button
-          onClick={registrarPagamento}
-          className="bg-[#D1328C] text-white px-6 py-2 rounded-lg hover:bg-[#b52a79] transition w-full md:w-auto"
-        >
-          Registrar
-        </button>
-      </div>
-
-      {/* Registrar Entrega */}
-      <h2 className="text-2xl font-semibold mb-4">Registrar Entrega</h2>
-      <div className="flex flex-col md:flex-row gap-4 items-center mb-8">
-        <select
-          className="px-4 py-2 border rounded-lg w-full md:w-1/4"
-          value={novaEntrega.parceiro}
-          onChange={e =>
-            setNovaEntrega({ ...novaEntrega, parceiro: e.target.value })
-          }
-        >
-          {entregas.map((p, idx) => (
-            <option key={idx} value={p.parceiro}>
-              {p.parceiro}
-            </option>
-          ))}
-        </select>
-
-        <input
-          type="number"
-          placeholder="Quantidade"
-          className="px-4 py-2 border rounded-lg w-full md:w-1/4"
-          value={novaEntrega.quantidade}
-          onChange={e => setNovaEntrega({ ...novaEntrega, quantidade: e.target.value })}
-        />
-
-        <input
-          type="date"
-          className="px-4 py-2 border rounded-lg w-full md:w-1/4"
-          value={novaEntrega.data}
-          onChange={e => setNovaEntrega({ ...novaEntrega, data: e.target.value })}
-        />
-
-        <button
-          onClick={registrarEntrega}
-          className="bg-[#D1328C] text-white px-6 py-2 rounded-lg hover:bg-[#b52a79] transition w-full md:w-auto"
-        >
-          Registrar
-        </button>
-      </div>
-
-      {/* Entregas e Pagamentos */}
-      <h2 className="text-2xl font-semibold mb-4">Entregas e Pagamentos</h2>
-      <div className="space-y-6">
-        {entregas.map((p, idx) => (
-          <div key={idx} className="bg-white p-4 rounded-lg shadow">
-            <h3 className="text-xl font-bold mb-2">{p.parceiro}</h3>
-            {p.entregas.map((e, i) => {
-              const total = e.quantidade * e.valor_unitario;
-              const totalPago = e.pagamentos.reduce((acc, pay) => acc + pay.valor, 0);
-              const saldo = total - totalPago;
-              let saldoColor = "text-red-600";
-              if (saldo === 0) saldoColor = "text-green-600";
-              else if (saldo < total) saldoColor = "text-yellow-600";
-
-              return (
-                <div key={i} className="flex justify-between items-center p-2 border-b">
-                  <div>
-                    <p>Data: {e.data}</p>
-                    <p>Quantidade: {e.quantidade} trufas</p>
-                    <p>Total: R$ {total.toFixed(2)}</p>
-                    <p>Pagamentos:</p>
-                    <ul className="list-disc list-inside">
-                      {e.pagamentos.map((pay, j) => (
-                        <li key={j}>
-                          R$ {pay.valor.toFixed(2)} - {pay.data}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div className="text-right">
-                    <p>Total Pago: R$ {totalPago.toFixed(2)}</p>
-                    <p>
-                      Saldo: <span className={saldoColor}>R$ {saldo.toFixed(2)}</span>
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ))}
-      </div>
-
-      {/* Resumo Financeiro Geral */}
-      <h2 className="text-2xl font-semibold mt-8 mb-4">Resumo Financeiro Geral</h2>
-      <div className="flex space-x-8 flex-wrap">
-        <div className="p-4 bg-white shadow rounded-lg w-1/4">
-          <p className="font-bold">Total Entregue:</p>
-          <p>
-            R$ {entregas.reduce((acc, p) => acc + p.entregas.reduce((eAcc, e) => eAcc + e.quantidade * e.valor_unitario, 0), 0).toFixed(2)}
-          </p>
-        </div>
-        <div className="p-4 bg-white shadow rounded-lg w-1/4">
-          <p className="font-bold">Total Pago:</p>
-          <p>
-            R$ {entregas.reduce((acc, p) => acc + p.entregas.reduce((eAcc, e) => eAcc + e.pagamentos.reduce((pAcc, pay) => pAcc + pay.valor, 0), 0), 0).toFixed(2)}
-          </p>
-        </div>
-        <div className="p-4 bg-white shadow rounded-lg w-1/4">
-          <p className="font-bold">Saldo Geral:</p>
-          <p>
-            R$ {entregas.reduce((acc, p) => acc + p.entregas.reduce((eAcc, e) => eAcc + e.quantidade * e.valor_unitario - e.pagamentos.reduce((pAcc, pay) => pAcc + pay.valor, 0), 0), 0).toFixed(2)}
-          </p>
+          {entregasFiltradasPorParceiro.length === 0 && (
+            <div className="bg-white rounded-2xl shadow p-6 text-center text-[#4A0E2E]/70">
+              Nenhum resultado para os filtros atuais.
+            </div>
+          )}
         </div>
       </div>
+
+      <Modal open={modalOpen} title={modalTitle} onClose={closeModal}>
+        {modalType === "entrega" && (
+          <EntregaForm
+            entregas={entregas}
+            novaEntrega={novaEntrega}
+            setNovaEntrega={setNovaEntrega}
+            onSubmit={registrarEntrega}
+            onCancel={closeModal}
+          />
+        )}
+
+        {modalType === "pagamento" && (
+          <PagamentoForm
+            entregas={entregas}
+            novoPagamento={novoPagamento}
+            setNovoPagamento={setNovoPagamento}
+            onSubmit={registrarPagamento}
+            onCancel={closeModal}
+          />
+        )}
+      </Modal>
     </div>
   );
 }

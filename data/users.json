@@ -1,5 +1,12 @@
 [
   {
+    "username": "doce agrado",
+    "senha": "admin123",
+    "nome": "Doce Agrado",
+    "role": "admin"
+  },
+
+  {
     "username": "fini espetinhos",
     "senha": "brenerfini",
     "nome": "Fini Espetinhos Steak House",
@@ -24,9 +31,15 @@
     "role": "parceiro"
   },
   {
-    "username": "doce agrado",
-    "senha": "admin123",
-    "nome": "Doce Agrado",
-    "role": "admin"
+    "username": "hamburgueria 168",
+    "senha": "andrehamburgueria168",
+    "nome": "Hamburgueria 168",
+    "role": "parceiro"
+  },
+  {
+    "username": "Facul Lorena",
+    "senha": "lorenafacul",
+    "nome": "Faculdade Lorena",
+    "role": "parceiro"
   }
 ]

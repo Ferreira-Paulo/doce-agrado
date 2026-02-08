@@ -1,6 +1,6 @@
 [
   {
-    "parceiro": "finiespetinhos",
+    "parceiro": "fini espetinhos",
     "entregas": [
       {
         "data": "2026-12-17",
@@ -18,6 +18,12 @@
         "quantidade": "24",
         "valor_unitario": "3.5",
         "pagamentos": []
+      },
+      {
+        "data": "2026-02-09",
+        "quantidade": "24",
+        "valor_unitario": "3.5",
+        "pagamentos": []
       }
     ]
   },
@@ -28,16 +34,71 @@
         "data": "2026-01-09",
         "quantidade": 60,
         "valor_unitario": 3.5,
-        "pagamentos": [
-        ]
+        "pagamentos": []
       },
       {
         "data": "2026-01-15",
-        "quantidade": 31,
+        "quantidade": 16,
         "valor_unitario": 3.5,
-        "pagamentos": [
-        ]
+        "pagamentos": []
+      },
+      {
+        "data": "2026-02-07",
+        "quantidade": "50",
+        "valor_unitario": "3.5",
+        "pagamentos": []
       }
     ]
+  },
+  {
+    "parceiro": "na brasas",
+    "entregas": [
+      {
+        "data": "2026-01-09",
+        "quantidade": 15,
+        "valor_unitario": 3.5,
+        "pagamentos": [
+          {
+            "valor": 52.5,
+            "data": "2026-01-18"
+          }
+        ]
+      },
+      {
+        "data": "2026-01-23",
+        "quantidade": 10,
+        "valor_unitario": 3.5,
+        "pagamentos": [
+          {
+            "valor": 49.5,
+            "data": "2026-01-18"
+          }
+        ]
+      },
+      {
+        "data": "2026-02-07",
+        "quantidade": 15,
+        "valor_unitario": 3.5,
+        "pagamentos": []
+      },
+      {
+        "data": "2026-02-17",
+        "quantidade": 15,
+        "valor_unitario": 3.5,
+        "pagamentos": []
+      }
+    ]
+  },
+  {
+    "parceiro": "gameflix",
+    "entregas": []
+  },
+  {
+    "parceiro": "hamburgueria 168",
+    "entregas": []
+  },
+  {
+    "parceiro": "Facul Lorena",
+    "entregas": []
   }
 ]

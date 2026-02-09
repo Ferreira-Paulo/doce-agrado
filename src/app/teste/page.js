@@ -39,8 +39,8 @@ export default function Home() {
       cta: { label: "Quero consignado", link: WHATSAPP_CONSIGNADO },
     },
     {
-      title: "Trufas para consumo (pequenas quantidades)",
-      desc: "Quer experimentar ou levar para casa? Você pede pelo WhatsApp e a gente combina sabores e retirada/entrega.",
+      title: "Trufas para consumo (Pedidos particulares)",
+      desc: "Quer experimentar, levar para casa ou presentear? Você pede pelo WhatsApp e a gente combina sabores e entrega/retirada.",
       bullets: [
         "Ideal pra matar a vontade",
         "Preço justo + sabor marcante",
@@ -125,49 +125,26 @@ export default function Home() {
 
             <div className="leading-tight">
               <div className="text-sm font-semibold tracking-wide">Doce Agrado</div>
-              <div className="text-xs text-white/60">
-                Trufas artesanais • Consignado • Kits
-              </div>
+              <div className="text-xs text-white/60">Trufas artesanais • Consignado • Kits</div>
             </div>
           </a>
-
-          <nav className="hidden items-center gap-6 text-sm md:flex">
-            <a className="text-white/70 hover:text-white" href="#consignado">
-              Consignado
-            </a>
-            <a className="text-white/70 hover:text-white" href="#pedidos">
-              Pedidos
-            </a>
-            <a className="text-white/70 hover:text-white" href="#datas">
-              Datas & eventos
-            </a>
-            <a className="text-white/70 hover:text-white" href="#faq">
-              Dúvidas
-            </a>
-          </nav>
 
           <div className="flex items-center gap-2">
             <Link
               href="/parceiro"
-              className="hidden rounded-2xl border border-white/15 bg-white/5 px-4 py-2 text-sm font-extrabold text-white hover:bg-white/10 md:inline-flex"
+              className="inline-flex rounded-2xl border border-white/15 bg-white/5 px-4 py-2 text-sm font-extrabold text-white hover:bg-white/10"
             >
               Área de Parceiros
             </Link>
-            <a
-              href={INSTAGRAM_LINK}
-              target="_blank"
-              rel="noreferrer"
-              className="hidden rounded-2xl border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white/90 hover:bg-white/10 md:inline-flex"
-            >
-              Instagram
-            </a>
+
             <a
               href={WHATSAPP_CONSIGNADO}
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-[#F6E7D6] to-[#D1328C] px-4 py-2 text-sm font-extrabold text-[#1B120C] hover:opacity-95"
             >
-              Falar no WhatsApp
+              <span className="hidden sm:inline">Falar no WhatsApp</span>
+              <span className="sm:hidden">WhatsApp</span>
             </a>
           </div>
         </div>
@@ -352,7 +329,7 @@ export default function Home() {
         <div className="mx-auto max-w-6xl px-4 py-14">
           <h2 className="text-2xl font-black md:text-4xl">Tudo que a Doce Agrado oferece</h2>
           <p className="mt-3 max-w-3xl text-white/70">
-            Escolha o objetivo (consignado, pedido pequeno ou lembrancinhas). A gente cuida do restante.
+            Escolha o objetivo (consignado, pedido particular ou lembrancinhas). A gente cuida do restante.
           </p>
 
           <div className="mt-10 grid gap-6 md:grid-cols-3">
@@ -398,7 +375,7 @@ export default function Home() {
             <div>
               <h2 className="text-2xl font-black md:text-4xl">Quando o produto é bom, ele gira.</h2>
               <p className="mt-3 max-w-3xl text-white/70">
-                Sabor + apresentação + facilidade. Seja no consignado, no pedido pequeno ou em lembrancinhas.
+                Sabor + apresentação + facilidade. Seja no consignado, no pedido particular ou em lembrancinhas.
               </p>
             </div>
             <a
@@ -472,7 +449,7 @@ export default function Home() {
                     rel="noreferrer"
                     className="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-6 py-3 text-sm font-extrabold text-white hover:bg-white/10"
                   >
-                    Pedido pequeno
+                    Pedido particular
                   </a>
                   <a
                     href={WHATSAPP_LEMBRANCINHAS}

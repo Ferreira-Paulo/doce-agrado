@@ -10,3 +10,13 @@
 button {
   cursor: pointer
 }
+
+:root {
+  --brand-primary: #D9418C;  /* rosa principal */
+  --brand-secondary: #E85AA0; /* rosa claro */
+  --brand-dark: #A12C66;     /* rosa escuro */
+  --brand-bg: #FFF7FB;       /* fundo */
+  --brand-text: #3A0F24;     /* texto */
+  --brand-card: rgba(217, 65, 140, 0.06);
+  --brand-border: rgba(217, 65, 140, 0.18);
+}

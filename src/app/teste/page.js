@@ -459,11 +459,24 @@ export default function Home() {
         <div className="mx-auto max-w-6xl px-4 py-10">
           <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-[#F6E7D6] to-[#D1328C]" />
-              <div>
-                <div className="text-sm font-extrabold">Doce Agrado</div>
-                <div className="text-xs text-white/60">Trufas artesanais • Consignado • Kits</div>
-              </div>
+              <a className="flex items-center gap-3">
+                <div className="relative h-10 w-10 overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-[0_10px_30px_-12px_rgba(255,255,255,0.18)]">
+                  <Image
+                    src="/img/logo-doce-agrado.png"
+                    alt="Logo Doce Agrado"
+                    fill
+                    className="object-contain p-0"
+                    priority
+                  />
+                </div>
+
+                <div className="leading-tight">
+                  <div className="text-sm font-semibold tracking-wide">Doce Agrado</div>
+                  <div className="text-xs text-white/60">
+                    Trufas artesanais • Consignado • Kits
+                  </div>
+                </div>
+              </a>
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row">

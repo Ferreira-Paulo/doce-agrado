@@ -11,7 +11,7 @@ export default function Home() {
     "Oi! Quero levar as trufas da Doce Agrado no consignado. Como funciona a reposição e valores?"
   );
   const WHATSAPP_PEDIDO = WHATSAPP(
-    "Oi! Quero pedir trufas para consumo (pequena quantidade). Quais sabores e valores?"
+    "Oi! Quero fazer um pedido particular de trufas (para consumo ou presente). Quais sabores e valores?"
   );
   const WHATSAPP_LEMBRANCINHAS = WHATSAPP(
     "Oi! Quero lembrancinhas/kits para uma data/evento. Quais opções vocês fazem?"
@@ -21,7 +21,7 @@ export default function Home() {
 
   const stats = [
     { label: "Consignado sem risco", value: "Você paga conforme vende" },
-    { label: "Pedidos rápidos", value: "Pequenas quantidades" },
+    { label: "Pedidos particulares", value: "Sob encomenda" },
     { label: "Datas & eventos", value: "Kits e lembrancinhas" },
   ];
 
@@ -65,7 +65,7 @@ export default function Home() {
   ];
 
   const steps = [
-    { n: "1", title: "Chame no WhatsApp", desc: "Diga se é consignado, pedido pequeno ou kits/lembrancinhas." },
+    { n: "1", title: "Chame no WhatsApp", desc: "Diga se é consignado, pedido particular ou kits/lembrancinhas." },
     { n: "2", title: "Montamos o formato ideal", desc: "Sabores, quantidade, validade, reposição e entrega." },
     { n: "3", title: "Entrega + acompanhamento", desc: "Consignado com controle simples e reposição combinada." },
   ];
@@ -94,8 +94,8 @@ export default function Home() {
       a: "Você recebe a quantidade combinada e paga conforme as vendas. A reposição é combinada para manter giro e evitar sobra.",
     },
     {
-      q: "Vocês vendem em pequena quantidade também?",
-      a: "Sim! Você chama no WhatsApp e a gente combina sabores, quantidade e entrega/retirada.",
+      q: "Vocês fazem pedidos particulares?",
+      a: "Sim! Trabalhamos com pedidos sob encomenda para consumo ou para presentear, mantendo o mesmo padrão de qualidade."
     },
     {
       q: "Fazem lembrancinhas e kits para datas e eventos?",
@@ -204,7 +204,7 @@ export default function Home() {
             <p className="mt-5 max-w-xl text-base leading-relaxed text-white/70 md:text-lg">
               A <strong className="text-white">Doce Agrado</strong> faz trufas recheadas com acabamento bonito e sabor marcante.
               Temos 3 formatos: <strong className="text-white">consignado</strong> (nosso foco),{" "}
-              <strong className="text-white">pedidos pequenos</strong> e{" "}
+              <strong className="text-white">pedidos particulares</strong> e{" "}
               <strong className="text-white">kits/lembrancinhas</strong> para datas e eventos.
             </p>
 
@@ -223,7 +223,7 @@ export default function Home() {
                 rel="noreferrer"
                 className="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-7 py-3 text-sm font-bold text-white/90 hover:bg-white/10"
               >
-                Fazer pedido pequeno
+                Fazer pedido particular
               </a>
               <a
                 href={WHATSAPP_LEMBRANCINHAS}
@@ -263,7 +263,7 @@ export default function Home() {
               <div className="mt-6 rounded-2xl border border-white/10 bg-[#0B0A09]/50 p-4">
                 <div className="text-sm font-extrabold">3 formas de pedir</div>
                 <div className="mt-1 text-sm text-white/70">
-                  Consignado • Pedido pequeno • Kits & lembrancinhas
+                  Consignado • Pedido particular • Kits & lembrancinhas
                 </div>
               </div>
 
@@ -280,6 +280,69 @@ export default function Home() {
             </div>
 
             <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-[#F6E7D6]/10 blur-2xl" />
+          </div>
+        </div>
+      </section>
+
+      {/* QUEM SOMOS */}
+      <section id="quem-somos" className="border-t border-white/10 bg-[#0B0A09]">
+        <div className="mx-auto max-w-6xl px-4 py-14">
+          <div className="grid gap-10 md:grid-cols-2 md:items-center">
+            {/* Texto */}
+            <div>
+              <h2 className="text-2xl font-black md:text-4xl">Quem somos</h2>
+
+              <p className="mt-4 text-base leading-relaxed text-white/70">
+                A <strong className="text-white">Doce Agrado</strong> é um projeto criado por{" "}
+                <strong className="text-white">Paulo e Lyvia</strong>, um casal junto há 8 anos.
+                Começamos em 2025 como uma renda extra e hoje levamos trufas artesanais para clientes e
+                parceiros que valorizam qualidade.
+              </p>
+
+              <p className="mt-4 text-base leading-relaxed text-white/70">
+                Não trabalhamos com atalhos: usamos <strong className="text-white">produtos de qualidade</strong>,{" "}
+                <strong className="text-white">fruta de verdade</strong> e focamos em sabor, apresentação e confiança —
+                seja no <strong className="text-white">consignado</strong>, em{" "}
+                <strong className="text-white">pedidos particulares</strong> ou em{" "}
+                <strong className="text-white">kits para datas especiais</strong>.
+              </p>
+
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                <a
+                  href={WHATSAPP_PEDIDO}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-6 py-3 text-sm font-extrabold text-white hover:bg-white/10"
+                >
+                  Fazer pedido particular
+                </a>
+                <a
+                  href={WHATSAPP_CONSIGNADO}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-[#F6E7D6] to-[#D1328C] px-6 py-3 text-sm font-extrabold text-[#1B120C] hover:opacity-95"
+                >
+                  Quero consignado
+                </a>
+              </div>
+            </div>
+
+            {/* Fotos (placeholders) */}
+            <div className="relative">
+              <div className="rounded-[28px] border border-white/10 bg-gradient-to-b from-white/10 to-white/5 p-4 shadow-[0_25px_80px_-40px_rgba(0,0,0,0.8)]">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="aspect-[4/5] rounded-2xl bg-white/10 ring-1 ring-white/10" />
+                  <div className="aspect-[4/5] rounded-2xl bg-white/10 ring-1 ring-white/10" />
+                </div>
+
+                <div className="mt-4 rounded-2xl border border-white/10 bg-[#0B0A09]/50 p-4">
+                  <div className="text-sm font-extrabold">Paulo & Lyvia</div>
+                  <div className="text-sm text-white/70">Criadores da Doce Agrado</div>
+                </div>
+              </div>
+
+              <div className="pointer-events-none absolute -left-8 -bottom-8 h-40 w-40 rounded-full bg-[#D1328C]/20 blur-2xl" />
+            </div>
           </div>
         </div>
       </section>
@@ -459,7 +522,7 @@ export default function Home() {
         <div className="mx-auto max-w-6xl px-4 py-10">
           <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-3">
-              <a className="flex items-center gap-3">
+              <a href="#inicio" className="flex items-center gap-3">
                 <div className="relative h-10 w-10 overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-[0_10px_30px_-12px_rgba(255,255,255,0.18)]">
                   <Image
                     src="/img/logo-doce-agrado.png"

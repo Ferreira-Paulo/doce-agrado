@@ -34,13 +34,23 @@
         "data": "2026-01-09",
         "quantidade": 60,
         "valor_unitario": 3.5,
-        "pagamentos": []
+        "pagamentos": [
+          {
+            "valor": 210,
+            "data": "2026-02-09"
+          }
+        ]
       },
       {
         "data": "2026-01-15",
         "quantidade": 16,
         "valor_unitario": 3.5,
-        "pagamentos": []
+        "pagamentos": [
+          {
+            "valor": 56,
+            "data": "2026-02-09"
+          }
+        ]
       },
       {
         "data": "2026-02-07",

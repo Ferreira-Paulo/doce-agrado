@@ -42,6 +42,7 @@ export default function ParceiroPage() {
         nome: fbUser.displayName || "Parceiro",
         email: fbUser.email,
         uid: fbUser.uid,
+        username: (fbUser.email || "").split("@")[0],
       });
 
       try {
@@ -109,7 +110,7 @@ export default function ParceiroPage() {
     <div className="min-h-screen bg-[#FFF9FB] px-4 py-8 md:px-8">
       <div className="max-w-5xl mx-auto">
         <PageHeader
-          title={`Olá, ${user.nome}`}
+          title={`Olá, ${user.username}`}
           subtitle="Aqui você acompanha suas entregas e pagamentos."
           onLogout={async () => {
             await signOut(auth);

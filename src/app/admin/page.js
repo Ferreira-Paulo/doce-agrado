@@ -72,6 +72,7 @@ export default function AdminPage() {
         nome: fbUser.displayName || "Admin",
         email: fbUser.email,
         uid: fbUser.uid,
+        username: (fbUser.email || "").split("@")[0],
       });
 
       try {
@@ -276,7 +277,7 @@ export default function AdminPage() {
     <div className="min-h-screen bg-[#FFF9FB] px-4 py-8 md:px-8">
       <div className="max-w-6xl mx-auto">
         <PageHeader
-          title={`Olá, ${user.nome} (Admin)`}
+          title={`Olá, ${user.username} (Admin)`}
           subtitle="Gerencie entregas e pagamentos de todos os parceiros."
           onLogout={async () => {
             await signOut(auth);

@@ -7,8 +7,10 @@ import PageHeader from "@/components/dashboard/PageHeader";
 import SummaryCards from "@/components/dashboard/SummaryCards";
 import FilterTabs from "@/components/dashboard/FilterTabs";
 import DeliveryCard from "@/components/dashboard/DeliveryCard";
-
 import { resumoEntregas, calcEntrega } from "@/components/utils/calc";
+
+import { auth } from "@/lib/firebase/client";
+import { onIdTokenChanged, signOut, getIdTokenResult } from "firebase/auth";
 
 export default function ParceiroPage() {
   const router = useRouter();
@@ -19,39 +21,59 @@ export default function ParceiroPage() {
   const [filtro, setFiltro] = useState("todas"); // todas | pendentes | pagas
 
   useEffect(() => {
-    const savedUser = localStorage.getItem("user");
-    if (!savedUser) {
-      router.push("/login");
-      return;
-    }
+    const unsub = onIdTokenChanged(auth, async (fbUser) => {
+      if (!fbUser) {
+        setLoading(false);
+        router.replace("/login");
+        return;
+      }
 
-    const parsedUser = JSON.parse(savedUser);
-    if (parsedUser.role !== "parceiro") {
-      router.push("/admin");
-      return;
-    }
+      // se for admin, manda pro admin
+      const token = await getIdTokenResult(fbUser, true);
+      const isAdmin = !!token.claims.admin;
+      if (isAdmin) {
+        setLoading(false);
+        router.replace("/admin");
+        return;
+      }
 
-    setUser(parsedUser);
+      // parceiro logado
+      setUser({
+        nome: fbUser.displayName || "Parceiro",
+        email: fbUser.email,
+        uid: fbUser.uid,
+      });
 
-    (async () => {
       try {
-        const res = await fetch("/api/entregas", { cache: "no-store" });
-        const all = await res.json();
+        const jwt = await fbUser.getIdToken();
+        const res = await fetch("/api/parceiro/entregas", {
+          cache: "no-store",
+          headers: { Authorization: `Bearer ${jwt}` },
+        });
 
-        const parceiroData =
-          all.find((e) => e.parceiro === parsedUser.username) || { entregas: [] };
+        if (!res.ok) {
+          const txt = await res.text();
+          console.error("ERRO /api/parceiro/entregas:", res.status, txt);
+          setEntregas([]);
+          return;
+        }
 
-        const list = [...(parceiroData.entregas || [])].sort((a, b) =>
+        const list = await res.json();
+
+        const sorted = [...(Array.isArray(list) ? list : [])].sort((a, b) =>
           String(b.data).localeCompare(String(a.data))
         );
 
-        setEntregas(list);
+        setEntregas(sorted);
       } catch (err) {
         console.error(err);
+        setEntregas([]);
       } finally {
         setLoading(false);
       }
-    })();
+    });
+
+    return () => unsub();
   }, [router]);
 
   const resumo = useMemo(() => resumoEntregas(entregas), [entregas]);
@@ -80,7 +102,8 @@ export default function ParceiroPage() {
     });
   }, [entregas, filtro]);
 
-  if (!user || loading) return <p className="p-8">Carregando...</p>;
+  if (loading) return <p className="p-8">Carregando...</p>;
+  if (!user) return null;
 
   return (
     <div className="min-h-screen bg-[#FFF9FB] px-4 py-8 md:px-8">
@@ -88,9 +111,9 @@ export default function ParceiroPage() {
         <PageHeader
           title={`Olá, ${user.nome}`}
           subtitle="Aqui você acompanha suas entregas e pagamentos."
-          onLogout={() => {
-            localStorage.removeItem("user");
-            router.push("/login");
+          onLogout={async () => {
+            await signOut(auth);
+            router.replace("/login");
           }}
         />
 

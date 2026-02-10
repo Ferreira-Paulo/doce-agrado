@@ -18,18 +18,21 @@ export default function PagamentoForm({
       <div className="flex flex-col gap-4">
         <select
           className="px-4 py-3 border rounded-xl w-full"
-          value={novoPagamento.parceiro}
-          onChange={e =>
+          value={novoPagamento.parceiro || ""}
+          onChange={(e) =>
             setNovoPagamento({ ...novoPagamento, parceiro: e.target.value })
           }
-          disabled={mode === "edit"} // parceiro não muda no edit (pra evitar bagunça)
+          disabled={mode === "edit"}
         >
-          {entregas.map(p => (
+          <option value="">Selecione um parceiro</option>
+
+          {entregas.map((p) => (
             <option key={p.parceiro} value={p.parceiro}>
               {p.parceiro}
             </option>
           ))}
         </select>
+
 
         <input
           type="number"

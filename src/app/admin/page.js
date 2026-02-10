@@ -14,6 +14,11 @@ import PartnerSection from "./components/PartnerSection";
 
 import Modal from "@/components/ui/Modal";
 
+import { auth } from "@/lib/firebase/client";
+
+import { onIdTokenChanged, signOut } from "firebase/auth";
+import { getIdTokenResult } from "firebase/auth";
+
 export default function AdminPage() {
   const router = useRouter();
 
@@ -49,36 +54,41 @@ export default function AdminPage() {
   }
 
   useEffect(() => {
-    const savedUser = localStorage.getItem("user");
-    if (!savedUser) {
-      router.push("/login");
-      return;
-    }
+    const unsub = onIdTokenChanged(auth, async (fbUser) => {
+      if (!fbUser) {
+        setLoading(false);
+        router.replace("/login");
+        return;
+      }
 
-    const parsedUser = JSON.parse(savedUser);
-    if (parsedUser.role !== "admin") {
-      router.push("/parceiro");
-      return;
-    }
+      const token = await getIdTokenResult(fbUser, true);
+      if (!token.claims.admin) {
+        setLoading(false);
+        router.replace("/parceiro");
+        return;
+      }
 
-    setUser(parsedUser);
+      setUser({
+        nome: fbUser.displayName || "Admin",
+        email: fbUser.email,
+        uid: fbUser.uid,
+      });
 
-    (async () => {
       try {
-        const res = await fetch("/api/entregas", { cache: "no-store" });
+        const res = await apiFetch("/api/entregas", {}, fbUser);
         const data = await res.json();
         const arr = Array.isArray(data) ? data : [];
         setEntregas(arr);
 
-        const primeiroParceiro = arr?.[0]?.parceiro || "";
-        setNovoPagamento((p) => ({ ...p, parceiro: primeiroParceiro }));
-        setNovaEntrega((e) => ({ ...e, parceiro: primeiroParceiro }));
-      } catch (err) {
-        console.error(err);
+        const primeiro = arr?.[0]?.parceiro || "";
+        setNovoPagamento((p) => ({ ...p, parceiro: p.parceiro || primeiro }));
+        setNovaEntrega((e) => ({ ...e, parceiro: e.parceiro || primeiro }));
       } finally {
         setLoading(false);
       }
-    })();
+    });
+
+    return () => unsub();
   }, [router]);
 
   // resumo geral: soma todas as entregas de todos parceiros
@@ -131,62 +141,121 @@ export default function AdminPage() {
       );
   }, [entregas, busca, filtroParceiro, filtroStatus]);
 
-  async function registrarPagamento() {
-    if (!novoPagamento.parceiro) return;
-    if (!novoPagamento.valor || isNaN(Number(novoPagamento.valor))) return;
+  async function apiFetch(url, options = {}, fbUserOverride) {
+    const u = fbUserOverride || auth.currentUser;
+    const token = u ? await u.getIdToken() : "";
 
-    const res = await fetch("/api/pagamentos", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...novoPagamento,
-        valor: Number(novoPagamento.valor),
-      }),
+    return fetch(url, {
+      ...options,
+      headers: {
+        ...(options.headers || {}),
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      cache: "no-store",
     });
+  }
 
-    const data = await res.json();
+  async function registrarPagamento() {
+    if (!novoPagamento.parceiro) {
+      alert("Selecione um parceiro");
+      return;
+    }
+    if (!novoPagamento.valor || isNaN(Number(novoPagamento.valor))) {
+      alert("Informe um valor válido");
+      return;
+    }
 
-    if (data.success) {
-      setEntregas(data.entregas);
+    const fbUser = auth.currentUser;
+    if (!fbUser) {
+      alert("Você não está logado.");
+      return;
+    }
+
+    try {
+      const res = await apiFetch(
+        "/api/pagamentos",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            ...novoPagamento,
+            valor: Number(novoPagamento.valor),
+          }),
+        },
+        fbUser
+      );
+
+      const text = await res.text();
+      let data = null;
+
+      try {
+        data = text ? JSON.parse(text) : null;
+      } catch {
+        console.error("Resposta não é JSON:", text);
+      }
+
+      if (!res.ok) {
+        console.error("PAGAMENTO API ERROR:", res.status, text);
+        alert(`Erro (${res.status}): ${data?.error || text || "Resposta vazia"}`);
+        return;
+      }
+
+      if (!data?.success) {
+        alert(data?.error || "Falha ao registrar pagamento");
+        return;
+      }
+
+      // ✅ recarrega entregas com token
+      const res2 = await apiFetch("/api/entregas", {}, fbUser);
+      const list = await res2.json();
+      setEntregas(Array.isArray(list) ? list : []);
+
+      // ✅ limpa somente o valor (mantém parceiro)
       setNovoPagamento((p) => ({
         ...p,
         valor: "",
         data: new Date().toISOString().slice(0, 10),
       }));
 
-      // ✅ fecha modal ao salvar
       closeModal();
-      return;
-    }
 
-    alert("Erro ao registrar pagamento: " + (data.error || "desconhecido"));
+      // seu backend retorna "restante" — mostra isso
+      alert(`Pagamento registrado! Restante não aplicado: R$ ${Number(data.restante || 0).toFixed(2)}`);
+    } catch (err) {
+      console.error(err);
+      alert("Erro inesperado ao registrar pagamento.");
+    }
   }
 
   async function registrarEntrega() {
     if (!novaEntrega.parceiro) return;
     if (!novaEntrega.quantidade || isNaN(Number(novaEntrega.quantidade))) return;
 
-    const res = await fetch("/api/entregas", {
+    const fbUser = auth.currentUser;
+    if (!fbUser) return;
+
+    const res = await apiFetch("/api/entregas", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ...novaEntrega,
         quantidade: Number(novaEntrega.quantidade),
         valor_unitario: Number(novaEntrega.valor_unitario),
       }),
-    });
+    }, fbUser);
 
     const data = await res.json();
 
     if (data.success) {
-      setEntregas(data.entregas);
-      setNovaEntrega((e) => ({
-        ...e,
-        quantidade: "",
+      const res2 = await apiFetch("/api/entregas", {}, fbUser);
+      const list = await res2.json();
+      setEntregas(Array.isArray(list) ? list : []);
+
+      setNovoPagamento((p) => ({
+        ...p,
+        valor: "",
         data: new Date().toISOString().slice(0, 10),
       }));
 
-      // ✅ fecha modal ao salvar
       closeModal();
       return;
     }
@@ -200,8 +269,8 @@ export default function AdminPage() {
     modalType === "entrega"
       ? "Nova Entrega"
       : modalType === "pagamento"
-      ? "Novo Pagamento"
-      : "";
+        ? "Novo Pagamento"
+        : "";
 
   return (
     <div className="min-h-screen bg-[#FFF9FB] px-4 py-8 md:px-8">
@@ -209,8 +278,8 @@ export default function AdminPage() {
         <PageHeader
           title={`Olá, ${user.nome} (Admin)`}
           subtitle="Gerencie entregas e pagamentos de todos os parceiros."
-          onLogout={() => {
-            localStorage.removeItem("user");
+          onLogout={async () => {
+            await signOut(auth);
             router.push("/login");
           }}
         />

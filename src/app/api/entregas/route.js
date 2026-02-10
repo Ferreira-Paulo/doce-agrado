@@ -1,131 +1,85 @@
-import fs from "fs";
-import path from "path";
+import { NextResponse } from "next/server";
+import { adminDb } from "@/lib/firebase/admin";
+import { requireAdmin } from "@/lib/auth/requireAdmin";
+import { FieldValue } from "firebase-admin/firestore";
 
-const filePath = path.join(process.cwd(), "data", "entregas.json");
+function normalizeEntrega(e) {
+  return {
+    id: e.id || `ent_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+    data: String(e.data || "").slice(0, 10), // YYYY-MM-DD
+    quantidade: Number(e.quantidade || 0),
+    valor_unitario: Number(e.valor_unitario || 0),
+    pagamentos: Array.isArray(e.pagamentos) ? e.pagamentos : [],
+    observacoes: e.observacoes ? String(e.observacoes) : "",
+  };
+}
 
-export async function GET() {
+export async function GET(req) {
   try {
-    // Se o arquivo não existir ainda, devolve lista vazia
-    if (!fs.existsSync(filePath)) {
-      return new Response(JSON.stringify([]), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
+    const gate = await requireAdmin(req);
+    if (!gate.ok) return NextResponse.json({ error: gate.error }, { status: gate.status });
+
+    const ps = await adminDb.collection("partners").get();
+    const out = [];
+
+    for (const p of ps.docs) {
+      const partner = p.data();
+      const parceiro = String(partner.username || p.id);
+
+      const delSnap = await adminDb
+        .collection("partners")
+        .doc(p.id)
+        .collection("deliveries")
+        .get();
+
+      const entregas = delSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+
+      out.push({ parceiro, entregas });
     }
 
-    const fileData = fs.readFileSync(filePath, "utf-8");
-    const entregas = fileData ? JSON.parse(fileData) : [];
-
-    return new Response(JSON.stringify(entregas), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+    out.sort((a, b) => a.parceiro.localeCompare(b.parceiro));
+    return NextResponse.json(out);
   } catch (err) {
-    console.error("Erro no GET /api/entregas:", err);
-    return new Response(JSON.stringify({ error: "Erro ao ler entregas" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    console.error("ENTREGAS GET ERROR:", err);
+    return NextResponse.json({ error: err?.message || "Erro interno" }, { status: 500 });
   }
 }
 
 export async function POST(req) {
   try {
+    const gate = await requireAdmin(req);
+    if (!gate.ok) return NextResponse.json({ success: false, error: gate.error }, { status: gate.status });
+
     const body = await req.json();
-    const { parceiro, data, quantidade, valor_unitario } = body;
 
-    console.log("Dados recebidos:", body);
+    const parceiro = String(body.parceiro || "").toLowerCase().trim(); // "fini"
+    const quantidade = Number(body.quantidade);
+    const valor_unitario = Number(body.valor_unitario);
+    const data = String(body.data || new Date().toISOString().slice(0, 10));
 
-    if (!parceiro || !data || !quantidade || !valor_unitario) {
-      return new Response(JSON.stringify({ error: "Dados incompletos" }), { status: 400 });
+    if (!parceiro) return NextResponse.json({ success: false, error: "parceiro obrigatório" }, { status: 400 });
+
+    // 1) achar o UID do parceiro (doc em partners)
+    const ps = await adminDb.collection("partners").where("username", "==", parceiro).limit(1).get();
+    if (ps.empty) {
+      return NextResponse.json({ success: false, error: `Parceiro não encontrado: ${parceiro}` }, { status: 404 });
     }
+    const uid = ps.docs[0].id;
 
-    // Lê o JSON atual
-    const fileData = fs.readFileSync(filePath, "utf-8");
-    const entregas = JSON.parse(fileData);
+    // 2) criar a entrega dentro do parceiro
+    const ref = adminDb.collection("partners").doc(uid).collection("deliveries").doc();
 
-    let parceiroExiste = false;
-
-    const novasEntregas = entregas.map((p) => {
-      if (p.parceiro === parceiro) {
-        parceiroExiste = true;
-        return {
-          ...p,
-          entregas: [
-            ...p.entregas,
-            { data, quantidade, valor_unitario, pagamentos: [] },
-          ],
-        };
-      }
-      return p;
+    await ref.set({
+      data,
+      quantidade,
+      valor_unitario,
+      pagamentos: [],        // começa vazio
+      createdAt: new Date().toISOString(),
     });
 
-    // Se o parceiro não existe ainda, cria um novo registro
-    if (!parceiroExiste) {
-      novasEntregas.push({
-        parceiro,
-        entregas: [{ data, quantidade, valor_unitario, pagamentos: [] }],
-      });
-    }
-
-    // Salva o JSON atualizado
-    fs.writeFileSync(filePath, JSON.stringify(novasEntregas, null, 2));
-
-    return new Response(JSON.stringify({ success: true, entregas: novasEntregas }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+    return NextResponse.json({ success: true, id: ref.id });
   } catch (err) {
-    console.error(err);
-    return new Response(JSON.stringify({ error: "Erro ao processar" }), { status: 500 });
-  }
-}
-
-export async function PATCH(req) {
-  try {
-    const body = await req.json();
-    const { parceiro, entregaIndex, patch } = body;
-
-    if (!parceiro && parceiro !== "") {
-      return new Response(JSON.stringify({ error: "Parceiro obrigatório" }), { status: 400 });
-    }
-    if (entregaIndex === undefined || entregaIndex === null) {
-      return new Response(JSON.stringify({ error: "entregaIndex obrigatório" }), { status: 400 });
-    }
-    if (!patch || typeof patch !== "object") {
-      return new Response(JSON.stringify({ error: "patch obrigatório" }), { status: 400 });
-    }
-
-    const fileData = fs.readFileSync(filePath, "utf-8");
-    const entregas = JSON.parse(fileData);
-
-    const idxParceiro = entregas.findIndex((p) => p.parceiro === parceiro);
-    if (idxParceiro < 0) {
-      return new Response(JSON.stringify({ error: "Parceiro não encontrado" }), { status: 404 });
-    }
-
-    const lista = entregas[idxParceiro].entregas || [];
-    if (!lista[entregaIndex]) {
-      return new Response(JSON.stringify({ error: "Entrega não encontrada" }), { status: 404 });
-    }
-
-    // aplica patch (mantém pagamentos)
-    lista[entregaIndex] = {
-      ...lista[entregaIndex],
-      ...patch,
-      pagamentos: lista[entregaIndex].pagamentos || [],
-    };
-
-    entregas[idxParceiro].entregas = lista;
-
-    fs.writeFileSync(filePath, JSON.stringify(entregas, null, 2));
-
-    return new Response(JSON.stringify({ success: true, entregas }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" }
-    });
-  } catch (err) {
-    console.error(err);
-    return new Response(JSON.stringify({ error: "Erro ao editar entrega" }), { status: 500 });
+    console.error("ENTREGAS POST ERROR:", err);
+    return NextResponse.json({ success: false, error: err?.message || "Erro interno" }, { status: 500 });
   }
 }

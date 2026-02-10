@@ -1,54 +1,95 @@
-import fs from "fs";
-import path from "path";
+import { NextResponse } from "next/server";
+import { adminDb } from "@/lib/firebase/admin";
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 
-const filePath = path.join(process.cwd(), "data", "entregas.json");
+function totalEntrega(e) {
+  return Number(e.quantidade || 0) * Number(e.valor_unitario || 0);
+}
+function totalPago(e) {
+  return (e.pagamentos || []).reduce((acc, p) => acc + Number(p.valor || 0), 0);
+}
 
 export async function POST(req) {
   try {
-    const body = await req.json();
-    const { parceiro, valor, data } = body;
-
-    if (!parceiro || !valor || !data) {
-      return new Response(JSON.stringify({ error: "Dados incompletos" }), { status: 400 });
+    const gate = await requireAdmin(req);
+    if (!gate.ok) {
+      return NextResponse.json({ success: false, error: gate.error }, { status: gate.status });
     }
 
-    // Lê o JSON atual
-    const fileData = fs.readFileSync(filePath, "utf-8");
-    const entregas = JSON.parse(fileData);
+    const body = await req.json();
 
-    let valorPago = parseFloat(valor);
+    const parceiro = String(body.parceiro || "").toLowerCase().trim(); // username
+    const valor = Number(body.valor);
+    const data = String(body.data || new Date().toISOString().slice(0, 10));
 
-    const novasEntregas = entregas.map(p => {
-      if (p.parceiro !== parceiro) return p;
+    if (!parceiro) {
+      return NextResponse.json({ success: false, error: "parceiro obrigatório" }, { status: 400 });
+    }
+    if (!Number.isFinite(valor) || valor <= 0) {
+      return NextResponse.json({ success: false, error: "valor inválido" }, { status: 400 });
+    }
 
-      const entregasAtualizadas = p.entregas.map(e => {
-        const total = e.quantidade * e.valor_unitario;
-        const totalPagoEntrega = e.pagamentos.reduce((acc, pay) => acc + pay.valor, 0);
-        let saldo = total - totalPagoEntrega;
+    // encontra partner por username
+    const ps = await adminDb
+      .collection("partners")
+      .where("username", "==", parceiro)
+      .limit(1)
+      .get();
 
-        if (saldo <= 0 || valorPago <= 0) return e;
+    if (ps.empty) {
+      return NextResponse.json(
+        { success: false, error: `Parceiro não encontrado: ${parceiro}` },
+        { status: 404 }
+      );
+    }
 
-        const abatimento = Math.min(valorPago, saldo);
-        valorPago -= abatimento;
+    const uid = ps.docs[0].id;
 
-        return {
-          ...e,
-          pagamentos: [...e.pagamentos, { valor: abatimento, data }]
-        };
-      });
+    // pega entregas mais antigas primeiro (FIFO)
+    const delRef = adminDb.collection("partners").doc(uid).collection("deliveries");
+    const delSnap = await delRef.orderBy("data", "asc").get();
 
-      return { ...p, entregas: entregasAtualizadas };
-    });
+    let restante = valor;
+    let aplicado = 0;
+    let entregasAfetadas = 0;
 
-    // Salva novamente no arquivo
-    fs.writeFileSync(filePath, JSON.stringify(novasEntregas, null, 2));
+    for (const d of delSnap.docs) {
+      if (restante <= 0) break;
 
-    return new Response(JSON.stringify({ success: true, entregas: novasEntregas }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" }
-    });
+      const entrega = d.data();
+      const aberto = totalEntrega(entrega) - totalPago(entrega);
+
+      if (aberto <= 0) continue;
+
+      const pagar = Math.min(aberto, restante);
+
+      const pagamentos = Array.isArray(entrega.pagamentos) ? [...entrega.pagamentos] : [];
+      pagamentos.push({ valor: pagar, data });
+
+      await d.ref.update({ pagamentos });
+
+      restante -= pagar;
+      aplicado += pagar;
+      entregasAfetadas += 1;
+    }
+
+    if (aplicado === 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Nenhuma entrega em aberto para aplicar esse pagamento (ou não existem entregas).",
+          debug: { parceiro, deliveries: delSnap.size },
+        },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json({ success: true, aplicado, restante, entregasAfetadas });
   } catch (err) {
-    console.error(err);
-    return new Response(JSON.stringify({ error: "Erro ao processar" }), { status: 500 });
+    console.error("PAGAMENTOS ROUTE ERROR:", err);
+    return NextResponse.json(
+      { success: false, error: err?.message || "Erro interno" },
+      { status: 500 }
+    );
   }
 }

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import PageHeader from "@/components/dashboard/PageHeader";
-import SummaryCards from "@/components/dashboard/SummaryCards";
+import SummaryCardsPartner from "@/components/dashboard/SummaryCardsPartner";
 import FilterTabs from "@/components/dashboard/FilterTabs";
 import DeliveryCard from "@/components/dashboard/DeliveryCard";
 import { resumoEntregas, calcEntrega } from "@/components/utils/calc";
@@ -118,7 +118,7 @@ export default function ParceiroPage() {
           }}
         />
 
-        <SummaryCards resumo={resumo} />
+        <SummaryCardsPartner resumo={resumo} />
 
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-2xl font-semibold text-[#4A0E2E]">Entregas</h2>

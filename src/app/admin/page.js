@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import PageHeader from "@/components/dashboard/PageHeader";
-import SummaryCards from "@/components/dashboard/SummaryCards";
+import SummaryCardsAdmin from "@/components/dashboard/SummaryCardsAdmin";
 import { resumoEntregas, calcEntrega } from "@/components/utils/calc";
 
 import PagamentoForm from "./components/PagamentoForm";
@@ -285,7 +285,7 @@ export default function AdminPage() {
           }}
         />
 
-        <SummaryCards resumo={resumoGeral} />
+        <SummaryCardsAdmin resumo={resumoGeral} />
 
         <div className="flex flex-col md:flex-row gap-3 mb-8">
           <button

@@ -14,20 +14,47 @@ export function calcEntrega(entrega) {
 }
 
 export function resumoEntregas(entregas = []) {
-  const totalEntregue = entregas.reduce(
-    (acc, e) => acc + Number(e.quantidade) * Number(e.valor_unitario),
-    0
-  );
+  let totalEntregue = 0;
+  let totalPago = 0;
 
-  const totalPago = entregas.reduce(
-    (acc, e) =>
-      acc + (e.pagamentos || []).reduce((pacc, p) => pacc + Number(p.valor), 0),
-    0
-  );
+  let trufasEntregues = 0;
+  let trufasPendentes = 0;
+
+  let entregasPendentes = 0;
+  let entregasPagas = 0;
+
+  for (const e of entregas || []) {
+    const { total = 0, totalPago: pago = 0, saldo = 0 } = calcEntrega(e);
+
+    const qtd = Number(e?.quantidade ?? e?.qtd ?? e?.qtde ?? e?.itens ?? 0) || 0;
+
+    totalEntregue += Number(total) || 0;
+    totalPago += Number(pago) || 0;
+
+    trufasEntregues += qtd;
+
+    if ((Number(saldo) || 0) > 0) {
+      entregasPendentes += 1;
+      trufasPendentes += qtd;
+    } else {
+      entregasPagas += 1;
+    }
+  }
+
+  const saldoGeral = totalEntregue - totalPago;
 
   return {
+    // Admin
     totalEntregue,
     totalPago,
-    saldoGeral: totalEntregue - totalPago,
+    saldoGeral,
+    entregasPendentes,
+    entregasPagas,
+    trufasEntregues,
+    trufasPendentes,
+
+    // Parceiro
+    trufasVendidas: trufasEntregues,
+    valorARepassar: saldoGeral,
   };
 }

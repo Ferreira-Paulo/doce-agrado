@@ -1,7 +1,6 @@
+import { btnBase, btnOn, btnOff } from "@/components/utils/styles";
+
 export default function FilterTabs({ value, onChange, counts }) {
-  const btnBase = "px-4 py-2 rounded-xl text-sm font-semibold transition border";
-  const btnOn = "bg-[#4A0E2E] text-white border-[#4A0E2E]";
-  const btnOff = "bg-white text-[#4A0E2E] border-black/10 hover:bg-black/[0.03]";
 
   return (
     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4">

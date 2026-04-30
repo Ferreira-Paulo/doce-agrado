@@ -1,7 +1,7 @@
 export function calcEntrega(entrega) {
-  const total = Number(entrega.quantidade) * Number(entrega.valor_unitario);
+  const total = Number(entrega.quantidade || 0) * Number(entrega.valor_unitario || 0);
   const totalPago = (entrega.pagamentos || []).reduce(
-    (acc, p) => acc + Number(p.valor),
+    (acc, p) => acc + Number(p.valor || 0),
     0
   );
   const saldo = total - totalPago;

@@ -1,7 +1,7 @@
 "use client";
 
-import { AuthProvider } from "@/lib/auth/AuthContext";
+import { ToastProvider } from "@/components/ui/Toast";
 
 export default function Providers({ children }) {
-  return <AuthProvider>{children}</AuthProvider>;
+  return <ToastProvider>{children}</ToastProvider>;
 }

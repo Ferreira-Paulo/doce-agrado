@@ -1,17 +1,14 @@
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase/admin";
 import { requireAdmin } from "@/lib/auth/requireAdmin";
-import { FieldValue } from "firebase-admin/firestore";
 
-function normalizeEntrega(e) {
-  return {
-    id: e.id || `ent_${Date.now()}_${Math.random().toString(16).slice(2)}`,
-    data: String(e.data || "").slice(0, 10), // YYYY-MM-DD
-    quantidade: Number(e.quantidade || 0),
-    valor_unitario: Number(e.valor_unitario || 0),
-    pagamentos: Array.isArray(e.pagamentos) ? e.pagamentos : [],
-    observacoes: e.observacoes ? String(e.observacoes) : "",
-  };
+async function findPartnerUid(parceiro) {
+  const ps = await adminDb
+    .collection("partners")
+    .where("username", "==", parceiro)
+    .limit(1)
+    .get();
+  return ps.empty ? null : ps.docs[0].id;
 }
 
 export async function GET(req) {
@@ -33,7 +30,6 @@ export async function GET(req) {
         .get();
 
       const entregas = delSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
-
       out.push({ parceiro, entregas });
     }
 
@@ -51,35 +47,73 @@ export async function POST(req) {
     if (!gate.ok) return NextResponse.json({ success: false, error: gate.error }, { status: gate.status });
 
     const body = await req.json();
-
-    const parceiro = String(body.parceiro || "").toLowerCase().trim(); // "fini"
+    const parceiro = String(body.parceiro || "").toLowerCase().trim();
     const quantidade = Number(body.quantidade);
     const valor_unitario = Number(body.valor_unitario);
     const data = String(body.data || new Date().toISOString().slice(0, 10));
 
     if (!parceiro) return NextResponse.json({ success: false, error: "parceiro obrigatório" }, { status: 400 });
 
-    // 1) achar o UID do parceiro (doc em partners)
-    const ps = await adminDb.collection("partners").where("username", "==", parceiro).limit(1).get();
-    if (ps.empty) {
-      return NextResponse.json({ success: false, error: `Parceiro não encontrado: ${parceiro}` }, { status: 404 });
-    }
-    const uid = ps.docs[0].id;
+    const uid = await findPartnerUid(parceiro);
+    if (!uid) return NextResponse.json({ success: false, error: `Parceiro não encontrado: ${parceiro}` }, { status: 404 });
 
-    // 2) criar a entrega dentro do parceiro
     const ref = adminDb.collection("partners").doc(uid).collection("deliveries").doc();
-
-    await ref.set({
-      data,
-      quantidade,
-      valor_unitario,
-      pagamentos: [],        // começa vazio
-      createdAt: new Date().toISOString(),
-    });
+    await ref.set({ data, quantidade, valor_unitario, pagamentos: [], createdAt: new Date().toISOString() });
 
     return NextResponse.json({ success: true, id: ref.id });
   } catch (err) {
     console.error("ENTREGAS POST ERROR:", err);
+    return NextResponse.json({ success: false, error: err?.message || "Erro interno" }, { status: 500 });
+  }
+}
+
+export async function PATCH(req) {
+  try {
+    const gate = await requireAdmin(req);
+    if (!gate.ok) return NextResponse.json({ success: false, error: gate.error }, { status: gate.status });
+
+    const { parceiro, deliveryId, quantidade, valor_unitario, data } = await req.json();
+
+    if (!parceiro || !deliveryId) {
+      return NextResponse.json({ success: false, error: "parceiro e deliveryId são obrigatórios" }, { status: 400 });
+    }
+
+    const uid = await findPartnerUid(String(parceiro).toLowerCase().trim());
+    if (!uid) return NextResponse.json({ success: false, error: `Parceiro não encontrado: ${parceiro}` }, { status: 404 });
+
+    const updates = {};
+    if (quantidade !== undefined) updates.quantidade = Number(quantidade);
+    if (valor_unitario !== undefined) updates.valor_unitario = Number(valor_unitario);
+    if (data !== undefined) updates.data = String(data);
+
+    await adminDb.collection("partners").doc(uid).collection("deliveries").doc(deliveryId).update(updates);
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error("ENTREGAS PATCH ERROR:", err);
+    return NextResponse.json({ success: false, error: err?.message || "Erro interno" }, { status: 500 });
+  }
+}
+
+export async function DELETE(req) {
+  try {
+    const gate = await requireAdmin(req);
+    if (!gate.ok) return NextResponse.json({ success: false, error: gate.error }, { status: gate.status });
+
+    const { parceiro, deliveryId } = await req.json();
+
+    if (!parceiro || !deliveryId) {
+      return NextResponse.json({ success: false, error: "parceiro e deliveryId são obrigatórios" }, { status: 400 });
+    }
+
+    const uid = await findPartnerUid(String(parceiro).toLowerCase().trim());
+    if (!uid) return NextResponse.json({ success: false, error: `Parceiro não encontrado: ${parceiro}` }, { status: 404 });
+
+    await adminDb.collection("partners").doc(uid).collection("deliveries").doc(deliveryId).delete();
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error("ENTREGAS DELETE ERROR:", err);
     return NextResponse.json({ success: false, error: err?.message || "Erro interno" }, { status: 500 });
   }
 }

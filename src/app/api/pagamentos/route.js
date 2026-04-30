@@ -1,13 +1,7 @@
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase/admin";
 import { requireAdmin } from "@/lib/auth/requireAdmin";
-
-function totalEntrega(e) {
-  return Number(e.quantidade || 0) * Number(e.valor_unitario || 0);
-}
-function totalPago(e) {
-  return (e.pagamentos || []).reduce((acc, p) => acc + Number(p.valor || 0), 0);
-}
+import { calcEntrega } from "@/components/utils/calc";
 
 export async function POST(req) {
   try {
@@ -57,7 +51,7 @@ export async function POST(req) {
       if (restante <= 0) break;
 
       const entrega = d.data();
-      const aberto = totalEntrega(entrega) - totalPago(entrega);
+      const { saldo: aberto } = calcEntrega(entrega);
 
       if (aberto <= 0) continue;
 

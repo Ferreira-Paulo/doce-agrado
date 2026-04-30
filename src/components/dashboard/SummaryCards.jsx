@@ -19,14 +19,6 @@ export default function SummaryCards({ resumo }) {
         </p>
       </div>
 
-      {/* Faturamento gerado */}
-      {/* <div className="bg-white rounded-2xl shadow p-5">
-        <p className="text-sm text-[#4A0E2E]/60">Faturamento gerado</p>
-        <p className="text-2xl font-bold text-green-600">
-          {moneyBR(resumo.faturamentoGerado ?? 0)}
-        </p>
-      </div> */}
-
       {/* Valor a repassar */}
       <div className="bg-white rounded-2xl shadow p-5">
         <p className="text-sm text-[#4A0E2E]/60">Valor a repassar</p>

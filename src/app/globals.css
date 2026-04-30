@@ -8,15 +8,20 @@
 }
 
 button {
-  cursor: pointer
+  cursor: pointer;
+}
+
+img {
+  image-orientation: from-image;
 }
 
 :root {
-  --brand-primary: #D9418C;  /* rosa principal */
-  --brand-secondary: #E85AA0; /* rosa claro */
-  --brand-dark: #A12C66;     /* rosa escuro */
-  --brand-bg: #FFF7FB;       /* fundo */
-  --brand-text: #3A0F24;     /* texto */
-  --brand-card: rgba(217, 65, 140, 0.06);
-  --brand-border: rgba(217, 65, 140, 0.18);
+  --brand-primary: #D1328C;           /* rosa principal (botões CTA) */
+  --brand-primary-hover: #b52a79;     /* hover dos botões CTA */
+  --brand-secondary: #E85AA0;         /* rosa claro */
+  --brand-dark: #4A0E2E;              /* texto e bordas escuras */
+  --brand-bg: #FFF9FB;                /* fundo das páginas */
+  --brand-text: #3A0F24;              /* texto corrido */
+  --brand-card: rgba(209, 50, 140, 0.06);
+  --brand-border: rgba(209, 50, 140, 0.18);
 }

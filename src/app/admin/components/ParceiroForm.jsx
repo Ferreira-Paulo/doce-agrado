@@ -10,7 +10,7 @@ function Field({ label, children }) {
 const inputCls =
   "px-4 py-3 border border-black/10 rounded-xl w-full text-[#4A0E2E] bg-white focus:outline-none focus:ring-2 focus:ring-[#D1328C]/30 focus:border-[#D1328C] transition";
 
-export default function ParceiroForm({ novoParceiro, setNovoParceiro, onSubmit, onCancel }) {
+export default function ParceiroForm({ novoParceiro, setNovoParceiro, onSubmit, onCancel, isLoading = false }) {
   return (
     <div className="flex flex-col gap-5">
       <Field label="Nome de usuário (login)">
@@ -47,7 +47,8 @@ export default function ParceiroForm({ novoParceiro, setNovoParceiro, onSubmit, 
           <button
             type="button"
             onClick={onCancel}
-            className="w-full border border-black/10 text-[#4A0E2E] py-3 rounded-xl font-semibold hover:bg-black/3 transition"
+            disabled={isLoading}
+            className="w-full border border-black/10 text-[#4A0E2E] py-3 rounded-xl font-semibold hover:bg-black/3 transition disabled:opacity-50"
           >
             Cancelar
           </button>
@@ -55,9 +56,10 @@ export default function ParceiroForm({ novoParceiro, setNovoParceiro, onSubmit, 
         <button
           type="button"
           onClick={onSubmit}
-          className="w-full bg-[#D1328C] text-white py-3 rounded-xl font-semibold hover:bg-[#b52a79] transition"
+          disabled={isLoading}
+          className="w-full bg-[#D1328C] text-white py-3 rounded-xl font-semibold hover:bg-[#b52a79] transition disabled:opacity-60"
         >
-          Criar parceiro
+          {isLoading ? "Criando..." : "Criar parceiro"}
         </button>
       </div>
     </div>

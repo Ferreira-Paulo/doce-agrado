@@ -3,15 +3,15 @@ import { moneyBR } from "@/components/utils/format";
 
 function StatCard({ icon: Icon, label, value, bg, iconColor, valueColor }) {
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-black/5 p-5 flex items-center gap-4">
-      <div className={`${bg} rounded-xl p-3 shrink-0`}>
-        <Icon className={`w-5 h-5 ${iconColor}`} />
+    <div className="bg-white rounded-2xl shadow-sm border border-black/5 p-3 sm:p-5 flex items-center gap-2 sm:gap-4">
+      <div className={`${bg} rounded-xl p-2 sm:p-3 shrink-0`}>
+        <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${iconColor}`} />
       </div>
       <div className="min-w-0">
-        <p className="text-xs font-semibold uppercase tracking-wide text-[#4A0E2E]/50 truncate">
+        <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wide text-[#4A0E2E]/50 leading-tight">
           {label}
         </p>
-        <p className={`text-xl font-extrabold mt-0.5 ${valueColor ?? "text-[#4A0E2E]"}`}>
+        <p className={`text-base sm:text-xl font-extrabold mt-0.5 ${valueColor ?? "text-[#4A0E2E]"}`}>
           {value}
         </p>
       </div>

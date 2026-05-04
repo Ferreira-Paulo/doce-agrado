@@ -1,10 +1,14 @@
+function round2(n) {
+  return Math.round(n * 100) / 100;
+}
+
 export function calcEntrega(entrega) {
-  const total = Number(entrega.quantidade || 0) * Number(entrega.valor_unitario || 0);
-  const totalPago = (entrega.pagamentos || []).reduce(
+  const total = round2(Number(entrega.quantidade || 0) * Number(entrega.valor_unitario || 0));
+  const totalPago = round2((entrega.pagamentos || []).reduce(
     (acc, p) => acc + Number(p.valor || 0),
     0
-  );
-  const saldo = total - totalPago;
+  ));
+  const saldo = round2(total - totalPago);
 
   let saldoColor = "text-red-600";
   if (saldo === 0) saldoColor = "text-green-600";

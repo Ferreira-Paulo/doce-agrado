@@ -76,7 +76,7 @@ export default function PartnerSection({ parceiro, entregas, onPagar, onEdit, on
           {onPagar && resumo.saldoGeral > 0 && (
             <button
               type="button"
-              onClick={(e) => { e.stopPropagation(); onPagar(parceiro); }}
+              onClick={(e) => { e.stopPropagation(); onPagar(parceiro, resumo.saldoGeral); }}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#D1328C]/10 text-[#D1328C] text-xs font-bold hover:bg-[#D1328C]/20 transition"
             >
               <CreditCard className="w-3.5 h-3.5" />

@@ -17,8 +17,11 @@ export async function POST(req) {
     }
 
     const slug = String(username).toLowerCase().trim().replace(/\s+/g, "");
-    if (!slug) {
-      return NextResponse.json({ success: false, error: "username inválido" }, { status: 400 });
+    if (!slug || !/^[a-z0-9_-]{2,30}$/.test(slug)) {
+      return NextResponse.json(
+        { success: false, error: "username inválido (use apenas letras, números, _ ou -, entre 2 e 30 caracteres)" },
+        { status: 400 }
+      );
     }
     if (password.length < 6) {
       return NextResponse.json(

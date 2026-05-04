@@ -1,3 +1,7 @@
+import { useMemo } from "react";
+import { resumoEntregas } from "@/components/utils/calc";
+import { moneyBR } from "@/components/utils/format";
+
 function Field({ label, children }) {
   return (
     <div className="flex flex-col gap-1.5">
@@ -18,8 +22,16 @@ export default function PagamentoForm({
   onCancel,
   mode = "create",
   submitLabel,
+  isLoading = false,
 }) {
   const label = submitLabel || (mode === "edit" ? "Salvar alterações" : "Registrar pagamento");
+
+  const saldoParceiro = useMemo(() => {
+    if (!novoPagamento.parceiro) return null;
+    const p = entregas.find((e) => e.parceiro === novoPagamento.parceiro);
+    if (!p) return null;
+    return resumoEntregas(p.entregas || []).saldoGeral;
+  }, [entregas, novoPagamento.parceiro]);
 
   return (
     <div className="flex flex-col gap-5">
@@ -40,6 +52,18 @@ export default function PagamentoForm({
           ))}
         </select>
       </Field>
+
+      {/* Saldo devedor do parceiro selecionado */}
+      {saldoParceiro !== null && (
+        <div className={`rounded-xl px-4 py-3 text-sm font-semibold flex items-center justify-between ${
+          saldoParceiro > 0
+            ? "bg-yellow-50 text-yellow-800 border border-yellow-200"
+            : "bg-green-50 text-green-700 border border-green-200"
+        }`}>
+          <span>Saldo devedor</span>
+          <span>{moneyBR(saldoParceiro)}</span>
+        </div>
+      )}
 
       <Field label="Valor pago (R$)">
         <input
@@ -71,7 +95,8 @@ export default function PagamentoForm({
           <button
             type="button"
             onClick={onCancel}
-            className="w-full border border-black/10 text-[#4A0E2E] py-3 rounded-xl font-semibold hover:bg-black/3 transition"
+            disabled={isLoading}
+            className="w-full border border-black/10 text-[#4A0E2E] py-3 rounded-xl font-semibold hover:bg-black/3 transition disabled:opacity-50"
           >
             Cancelar
           </button>
@@ -79,9 +104,10 @@ export default function PagamentoForm({
         <button
           type="button"
           onClick={onSubmit}
-          className="w-full bg-[#D1328C] text-white py-3 rounded-xl font-semibold hover:bg-[#b52a79] transition"
+          disabled={isLoading}
+          className="w-full bg-[#D1328C] text-white py-3 rounded-xl font-semibold hover:bg-[#b52a79] transition disabled:opacity-60"
         >
-          {label}
+          {isLoading ? "Salvando..." : label}
         </button>
       </div>
     </div>

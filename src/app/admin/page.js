@@ -57,6 +57,8 @@ export default function AdminPage() {
   const [filtroStatus, setFiltroStatus] = useState("todas");
   const [ordenacao, setOrdenacao] = useState("saldo-desc");
 
+  const [submitting, setSubmitting] = useState(false);
+
   function closeModal() {
     setModalOpen(false);
     setModalType(null);
@@ -88,6 +90,7 @@ export default function AdminPage() {
 
       try {
         const res = await apiFetch("/api/entregas", {}, fbUser);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         const arr = Array.isArray(data) ? data : [];
         setEntregas(arr);
@@ -95,6 +98,9 @@ export default function AdminPage() {
         const primeiro = arr?.[0]?.parceiro || "";
         setNovoPagamento((p) => ({ ...p, parceiro: p.parceiro || primeiro }));
         setNovaEntrega((e) => ({ ...e, parceiro: e.parceiro || primeiro }));
+      } catch (err) {
+        console.error("Erro ao carregar entregas:", err);
+        toast("Não foi possível carregar os dados. Recarregue a página.", "error");
       } finally {
         setLoading(false);
       }
@@ -166,9 +172,15 @@ export default function AdminPage() {
   async function recarregarEntregas() {
     const fbUser = auth.currentUser;
     if (!fbUser) return;
-    const res = await apiFetch("/api/entregas", {}, fbUser);
-    const list = await res.json();
-    setEntregas(Array.isArray(list) ? list : []);
+    try {
+      const res = await apiFetch("/api/entregas", {}, fbUser);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const list = await res.json();
+      setEntregas(Array.isArray(list) ? list : []);
+    } catch (err) {
+      console.error("Erro ao recarregar entregas:", err);
+      toast("Erro ao atualizar os dados.", "error");
+    }
   }
 
   // ─── Abrir modais ────────────────────────────────────────────────────
@@ -192,8 +204,13 @@ export default function AdminPage() {
     setModalOpen(true);
   }
 
-  function openPagar(parceiro = "") {
-    setNovoPagamento((p) => ({ ...p, parceiro: parceiro || p.parceiro, valor: "", data: new Date().toISOString().slice(0, 10) }));
+  function openPagar(parceiro = "", saldoSugerido = "") {
+    setNovoPagamento((p) => ({
+      ...p,
+      parceiro: parceiro || p.parceiro,
+      valor: saldoSugerido ? String(saldoSugerido) : "",
+      data: new Date().toISOString().slice(0, 10),
+    }));
     setModalType("pagamento");
     setModalMode("create");
     setModalOpen(true);
@@ -204,6 +221,7 @@ export default function AdminPage() {
     if (!novoPagamento.parceiro) { toast("Selecione um parceiro.", "error"); return; }
     if (!novoPagamento.valor || isNaN(Number(novoPagamento.valor))) { toast("Informe um valor válido.", "error"); return; }
 
+    setSubmitting(true);
     try {
       const res = await apiFetch("/api/pagamentos", {
         method: "POST",
@@ -225,6 +243,8 @@ export default function AdminPage() {
       );
     } catch {
       toast("Erro inesperado ao registrar pagamento.", "error");
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -232,6 +252,7 @@ export default function AdminPage() {
     if (!novaEntrega.parceiro) { toast("Selecione um parceiro.", "error"); return; }
     if (!novaEntrega.quantidade || isNaN(Number(novaEntrega.quantidade))) { toast("Informe uma quantidade válida.", "error"); return; }
 
+    setSubmitting(true);
     try {
       const isEdit = modalMode === "edit";
       const method = isEdit ? "PATCH" : "POST";
@@ -249,6 +270,8 @@ export default function AdminPage() {
       toast(isEdit ? "Entrega atualizada!" : "Entrega registrada!", "success");
     } catch {
       toast("Erro inesperado ao salvar entrega.", "error");
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -276,6 +299,7 @@ export default function AdminPage() {
     if (!novoParceiro.username) { toast("Informe o nome de usuário.", "error"); return; }
     if (!novoParceiro.password || novoParceiro.password.length < 6) { toast("A senha precisa ter pelo menos 6 caracteres.", "error"); return; }
 
+    setSubmitting(true);
     try {
       const res = await apiFetch("/api/admin/parceiros", {
         method: "POST",
@@ -291,6 +315,8 @@ export default function AdminPage() {
       toast(`Parceiro "${data.username}" criado com sucesso!`, "success");
     } catch {
       toast("Erro inesperado ao criar parceiro.", "error");
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -466,6 +492,7 @@ export default function AdminPage() {
             onSubmit={registrarEntrega}
             onCancel={closeModal}
             mode={modalMode}
+            isLoading={submitting}
           />
         )}
         {modalType === "pagamento" && (
@@ -475,6 +502,7 @@ export default function AdminPage() {
             setNovoPagamento={setNovoPagamento}
             onSubmit={registrarPagamento}
             onCancel={closeModal}
+            isLoading={submitting}
           />
         )}
         {modalType === "parceiro" && (
@@ -483,6 +511,7 @@ export default function AdminPage() {
             setNovoParceiro={setNovoParceiro}
             onSubmit={criarParceiro}
             onCancel={closeModal}
+            isLoading={submitting}
           />
         )}
       </Modal>

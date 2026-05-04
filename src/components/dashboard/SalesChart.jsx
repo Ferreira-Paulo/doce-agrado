@@ -25,7 +25,18 @@ function buildMonthlyData(entregas) {
 export default function SalesChart({ entregas }) {
   const data = useMemo(() => buildMonthlyData(entregas), [entregas]);
 
-  if (data.length < 2) return null;
+  if (data.length === 0) return null;
+
+  if (data.length < 2) return (
+    <div className="bg-white rounded-2xl shadow-sm border border-black/5 p-5 mb-6">
+      <h3 className="text-sm font-bold text-[#4A0E2E]/60 uppercase tracking-wide mb-4">
+        Trufas por mês
+      </h3>
+      <p className="text-sm text-[#4A0E2E]/40 py-6 text-center">
+        O gráfico estará disponível a partir do segundo mês de entregas.
+      </p>
+    </div>
+  );
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-black/5 p-5 mb-6">

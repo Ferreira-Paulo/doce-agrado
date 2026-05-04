@@ -1,9 +1,19 @@
+import Image from "next/image";
 import { LogOut } from "lucide-react";
 
 export default function Topbar({ user, onLogout, isAdmin = false }) {
   return (
     <header className="fixed top-0 inset-x-0 z-40 h-14 bg-white border-b border-black/8 flex items-center px-4 md:px-8 gap-4">
-      <div className="flex-1" />
+      <div className="flex items-center flex-1">
+        <Image
+          src="/img/logo-doce-agrado.png"
+          alt="Doce Agrado"
+          height={36}
+          width={120}
+          className="h-9 w-auto object-contain"
+          priority
+        />
+      </div>
 
       <div className="flex items-center gap-3">
         {user && (

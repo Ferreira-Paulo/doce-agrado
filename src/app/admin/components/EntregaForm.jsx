@@ -1,3 +1,6 @@
+import { useMemo } from "react";
+import { moneyBR } from "@/components/utils/format";
+
 function Field({ label, children }) {
   return (
     <div className="flex flex-col gap-1.5">
@@ -18,8 +21,15 @@ export default function EntregaForm({
   onCancel,
   mode = "create",
   submitLabel,
+  isLoading = false,
 }) {
   const label = submitLabel || (mode === "edit" ? "Salvar alterações" : "Registrar entrega");
+
+  const previewTotal = useMemo(() => {
+    const q = Number(novaEntrega.quantidade);
+    const v = Number(novaEntrega.valor_unitario);
+    return q > 0 && v > 0 ? q * v : null;
+  }, [novaEntrega.quantidade, novaEntrega.valor_unitario]);
 
   return (
     <div className="flex flex-col gap-5">
@@ -78,12 +88,21 @@ export default function EntregaForm({
         />
       </Field>
 
+      {/* Preview do total */}
+      {previewTotal !== null && (
+        <div className="rounded-xl bg-[#D1328C]/8 px-4 py-3 text-sm font-semibold flex items-center justify-between text-[#D1328C]">
+          <span>Total da entrega</span>
+          <span>{moneyBR(previewTotal)}</span>
+        </div>
+      )}
+
       <div className="flex gap-3 pt-1">
         {onCancel && (
           <button
             type="button"
             onClick={onCancel}
-            className="w-full border border-black/10 text-[#4A0E2E] py-3 rounded-xl font-semibold hover:bg-black/3 transition"
+            disabled={isLoading}
+            className="w-full border border-black/10 text-[#4A0E2E] py-3 rounded-xl font-semibold hover:bg-black/3 transition disabled:opacity-50"
           >
             Cancelar
           </button>
@@ -91,9 +110,10 @@ export default function EntregaForm({
         <button
           type="button"
           onClick={onSubmit}
-          className="w-full bg-[#D1328C] text-white py-3 rounded-xl font-semibold hover:bg-[#b52a79] transition"
+          disabled={isLoading}
+          className="w-full bg-[#D1328C] text-white py-3 rounded-xl font-semibold hover:bg-[#b52a79] transition disabled:opacity-60"
         >
-          {label}
+          {isLoading ? "Salvando..." : label}
         </button>
       </div>
     </div>

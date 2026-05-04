@@ -53,6 +53,15 @@ export async function POST(req) {
     const data = String(body.data || new Date().toISOString().slice(0, 10));
 
     if (!parceiro) return NextResponse.json({ success: false, error: "parceiro obrigatório" }, { status: 400 });
+    if (!Number.isFinite(quantidade) || quantidade <= 0 || !Number.isInteger(quantidade)) {
+      return NextResponse.json({ success: false, error: "quantidade deve ser um inteiro positivo" }, { status: 400 });
+    }
+    if (!Number.isFinite(valor_unitario) || valor_unitario <= 0) {
+      return NextResponse.json({ success: false, error: "valor_unitario deve ser positivo" }, { status: 400 });
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) {
+      return NextResponse.json({ success: false, error: "data inválida (use YYYY-MM-DD)" }, { status: 400 });
+    }
 
     const uid = await findPartnerUid(parceiro);
     if (!uid) return NextResponse.json({ success: false, error: `Parceiro não encontrado: ${parceiro}` }, { status: 404 });
@@ -82,9 +91,26 @@ export async function PATCH(req) {
     if (!uid) return NextResponse.json({ success: false, error: `Parceiro não encontrado: ${parceiro}` }, { status: 404 });
 
     const updates = {};
-    if (quantidade !== undefined) updates.quantidade = Number(quantidade);
-    if (valor_unitario !== undefined) updates.valor_unitario = Number(valor_unitario);
-    if (data !== undefined) updates.data = String(data);
+    if (quantidade !== undefined) {
+      const q = Number(quantidade);
+      if (!Number.isFinite(q) || q <= 0 || !Number.isInteger(q)) {
+        return NextResponse.json({ success: false, error: "quantidade deve ser um inteiro positivo" }, { status: 400 });
+      }
+      updates.quantidade = q;
+    }
+    if (valor_unitario !== undefined) {
+      const v = Number(valor_unitario);
+      if (!Number.isFinite(v) || v <= 0) {
+        return NextResponse.json({ success: false, error: "valor_unitario deve ser positivo" }, { status: 400 });
+      }
+      updates.valor_unitario = v;
+    }
+    if (data !== undefined) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(String(data))) {
+        return NextResponse.json({ success: false, error: "data inválida (use YYYY-MM-DD)" }, { status: 400 });
+      }
+      updates.data = String(data);
+    }
 
     await adminDb.collection("partners").doc(uid).collection("deliveries").doc(deliveryId).update(updates);
 

@@ -17,14 +17,18 @@ import { resumoEntregas, calcEntrega } from "@/components/utils/calc";
 import { auth } from "@/lib/firebase/client";
 import { apiFetch } from "@/lib/auth/apiFetch";
 import { onIdTokenChanged, signOut, getIdTokenResult } from "firebase/auth";
+import { useToast } from "@/components/ui/Toast";
 
 export default function ParceiroPage() {
   const router = useRouter();
+
+  const addToast = useToast();
 
   const [user, setUser] = useState(null);
   const [entregas, setEntregas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filtro, setFiltro] = useState("todas");
+  const [lastUpdated, setLastUpdated] = useState(null);
 
   useEffect(() => {
     const unsub = onIdTokenChanged(auth, async (fbUser) => {
@@ -53,6 +57,7 @@ export default function ParceiroPage() {
 
         if (!res.ok) {
           console.error("ERRO /api/parceiro/entregas:", res.status);
+          addToast("Não foi possível carregar suas entregas. Tente recarregar a página.", "error");
           setEntregas([]);
           return;
         }
@@ -62,8 +67,14 @@ export default function ParceiroPage() {
           String(b.data).localeCompare(String(a.data))
         );
         setEntregas(sorted);
+
+        const now = new Date();
+        setLastUpdated(
+          `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`
+        );
       } catch (err) {
         console.error(err);
+        addToast("Erro de conexão. Verifique sua internet e tente novamente.", "error");
         setEntregas([]);
       } finally {
         setLoading(false);
@@ -137,6 +148,7 @@ export default function ParceiroPage() {
                 ? `Você já recebeu ${resumo.trufasEntregues} trufas da Doce Agrado!`
                 : "Acompanhe suas entregas e pagamentos."
             }
+            lastUpdated={lastUpdated}
           />
 
           <SummaryCardsPartner resumo={resumo} />

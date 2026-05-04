@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
+import { timingSafeEqual } from "crypto";
 import { adminAuth } from "@/lib/firebase/admin";
+
+function safeKeyEqual(a, b) {
+  if (!a || !b || a.length !== b.length) return false;
+  return timingSafeEqual(Buffer.from(a), Buffer.from(b));
+}
 
 // Rate limiter em memória: máximo 5 tentativas por IP a cada 15 minutos.
 // Em ambiente serverless cada instância tem seu próprio Map, mas é suficiente
@@ -37,8 +43,8 @@ export async function POST(req) {
   try {
     const { setupKey, email } = await req.json();
 
-    if (!setupKey || setupKey !== process.env.ADMIN_SETUP_KEY) {
-      console.warn(`[make-admin] Chave inválida — ip=${ip} email=${email}`);
+    if (!safeKeyEqual(setupKey, process.env.ADMIN_SETUP_KEY)) {
+      console.warn(`[make-admin] Chave inválida — ip=${ip}`);
       return NextResponse.json({ success: false, error: "Chave inválida" }, { status: 401 });
     }
 

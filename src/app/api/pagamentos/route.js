@@ -39,41 +39,49 @@ export async function POST(req) {
 
     const uid = ps.docs[0].id;
 
-    // pega entregas mais antigas primeiro (FIFO)
     const delRef = adminDb.collection("partners").doc(uid).collection("deliveries");
-    const delSnap = await delRef.orderBy("data", "asc").get();
 
-    let restante = valor;
     let aplicado = 0;
+    let restante = valor;
     let entregasAfetadas = 0;
 
-    for (const d of delSnap.docs) {
-      if (restante <= 0) break;
+    // Transação garante consistência: sem race condition se dois pagamentos chegarem ao mesmo tempo
+    await adminDb.runTransaction(async (t) => {
+      aplicado = 0;
+      restante = valor;
+      entregasAfetadas = 0;
 
-      const entrega = d.data();
-      const { saldo: aberto } = calcEntrega(entrega);
+      const delSnap = await t.get(delRef.orderBy("data", "asc"));
 
-      if (aberto <= 0) continue;
+      // Coleta writes separados para respeitar a regra reads-before-writes do Firestore
+      const pendingWrites = [];
 
-      const pagar = Math.min(aberto, restante);
+      for (const d of delSnap.docs) {
+        if (restante <= 0) break;
 
-      const pagamentos = Array.isArray(entrega.pagamentos) ? [...entrega.pagamentos] : [];
-      pagamentos.push({ valor: pagar, data });
+        const entrega = d.data();
+        const { saldo: aberto } = calcEntrega(entrega);
 
-      await d.ref.update({ pagamentos });
+        if (aberto <= 0) continue;
 
-      restante -= pagar;
-      aplicado += pagar;
-      entregasAfetadas += 1;
-    }
+        const pagar = Math.min(aberto, restante);
+        const pagamentos = Array.isArray(entrega.pagamentos) ? [...entrega.pagamentos] : [];
+        pagamentos.push({ valor: pagar, data });
+
+        pendingWrites.push({ ref: d.ref, pagamentos });
+        restante -= pagar;
+        aplicado += pagar;
+        entregasAfetadas += 1;
+      }
+
+      for (const { ref, pagamentos } of pendingWrites) {
+        t.update(ref, { pagamentos });
+      }
+    });
 
     if (aplicado === 0) {
       return NextResponse.json(
-        {
-          success: false,
-          error: "Nenhuma entrega em aberto para aplicar esse pagamento (ou não existem entregas).",
-          debug: { parceiro, deliveries: delSnap.size },
-        },
+        { success: false, error: "Nenhuma entrega em aberto para aplicar esse pagamento." },
         { status: 400 }
       );
     }

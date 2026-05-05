@@ -1,549 +1,656 @@
 import Image from "next/image";
 import Link from "next/link";
 
-export default function Home() {
-  const PHONE = "5512988199718";
+// ─── Contatos ──────────────────────────────────────────────────────────────────
+const PHONE     = "5512988199718";
+const INSTAGRAM = "https://instagram.com/doceagrado7";
 
-  const WHATSAPP = (text) =>
-    `https://wa.me/${PHONE}?text=${encodeURIComponent(text)}`;
+const wa = (text) =>
+  `https://wa.me/${PHONE}?text=${encodeURIComponent(text)}`;
 
-  const WHATSAPP_CONSIGNADO = WHATSAPP(
-    "Oi! Quero levar as trufas da Doce Agrado no consignado. Como funciona a reposição e valores?"
-  );
-  const WHATSAPP_PEDIDO = WHATSAPP(
-    "Oi! Quero fazer um pedido particular de trufas (para consumo ou presente). Quais sabores e valores?"
-  );
-  const WHATSAPP_LEMBRANCINHAS = WHATSAPP(
-    "Oi! Quero lembrancinhas/kits para uma data/evento. Quais opções vocês fazem?"
-  );
+const WA_CONSIGNADO = wa("Oi! Tenho um estabelecimento e quero conhecer o consignado da Doce Agrado. Como funciona?");
+const WA_PEDIDO     = wa("Oi! Quero fazer um pedido particular de trufas. Quais sabores e valores?");
+const WA_KITS       = wa("Oi! Quero lembrancinhas e kits para uma data especial. Quais opções vocês fazem?");
 
-  const INSTAGRAM_LINK = "https://instagram.com/doceagrado7";
+// ─── Dados ─────────────────────────────────────────────────────────────────────
+const BENEFICIOS = [
+  {
+    titulo: "Você paga só o que vende",
+    desc: "Sem risco de encalhe. O produto vai para o seu balcão e você acerta conforme as vendas acontecem.",
+    icon: "💰",
+  },
+  {
+    titulo: "Reposição combinada",
+    desc: "Quando o estoque cai, a gente repõe. Simples, sem burocracia, sem você precisar se preocupar.",
+    icon: "🔄",
+  },
+  {
+    titulo: "Alto giro, produto diferenciado",
+    desc: "Trufa artesanal com rótulo próprio. Aumenta o ticket médio do seu caixa e fideliza o cliente.",
+    icon: "📈",
+  },
+];
 
-  const stats = [
-    { label: "Consignado sem risco", value: "Você paga conforme vende" },
-    { label: "Pedidos particulares", value: "Sob encomenda" },
-    { label: "Datas & eventos", value: "Kits e lembrancinhas" },
-  ];
+const GALERIA = [
+  { src: "/img/trufa-editada-1.jpg",    alt: "Trufa artesanal Doce Agrado — acabamento caprichado" },
+  { src: "/img/mini_panetone.jpg",       alt: "Mini panetone artesanal Doce Agrado" },
+  { src: "/img/trufa-editada-2.png",    alt: "Trufa Doce Agrado embalada com rótulo" },
+  { src: "/img/barra_preto_branco.jpg", alt: "Barras de chocolate Doce Agrado embaladas" },
+];
 
-  const pillars = [
-    {
-      title: "Consignado para estabelecimentos",
-      desc: "Para bares, restaurantes, lanchonetes, padarias e mercados: produto de balcão com saída rápida.",
-      bullets: [
-        "Você paga conforme vende",
-        "Reposição combinada (sem complicação)",
-        "Aumenta ticket médio no caixa",
-      ],
-      tag: "Nosso foco principal",
-      id: "consignado",
-      cta: { label: "Quero consignado", link: WHATSAPP_CONSIGNADO },
-    },
-    {
-      title: "Trufas para consumo (Pedidos particulares)",
-      desc: "Quer experimentar, levar para casa ou presentear? Você pede pelo WhatsApp e a gente combina sabores e entrega/retirada.",
-      bullets: [
-        "Ideal pra matar a vontade",
-        "Preço justo + sabor marcante",
-        "Perfeito para presentear também",
-      ],
-      tag: "Pedido do dia a dia",
-      id: "pedidos",
-      cta: { label: "Quero fazer um pedido", link: WHATSAPP_PEDIDO },
-    },
-    {
-      title: "Lembrancinhas, kits e datas comemorativas",
-      desc: "Carnaval, Dia dos Namorados, aniversários, casamentos, Páscoa, Dia das Mães/Pais, Natal, Ano Novo e empresas.",
-      bullets: [
-        "Kits sob encomenda",
-        "Opções personalizadas",
-        "Ótimo para eventos e brindes",
-      ],
-      tag: "Sazonais & eventos",
-      id: "datas",
-      cta: { label: "Quero lembrancinhas/kits", link: WHATSAPP_LEMBRANCINHAS },
-    },
-  ];
+const TAMBEM = [
+  {
+    tag: "Pedidos particulares",
+    titulo: "Para consumo ou presente",
+    desc: "Quer experimentar ou presentear alguém especial? Você pede pelo WhatsApp e a gente cuida do restante.",
+    bullets: ["Sabores variados", "Sob encomenda", "Ideal para presentear"],
+    cta: { label: "Fazer pedido", link: WA_PEDIDO },
+    icon: "🍫",
+  },
+  {
+    tag: "Kits & Lembrancinhas",
+    titulo: "Eventos e datas especiais",
+    desc: "Natal, Páscoa, Dia das Mães, casamentos, aniversários e eventos corporativos. Kits personalizados.",
+    bullets: ["Personalização disponível", "Produção sob demanda", "Ótimo para brindes"],
+    cta: { label: "Pedir kits", link: WA_KITS },
+    icon: "🎁",
+  },
+];
 
-  const steps = [
-    { n: "1", title: "Chame no WhatsApp", desc: "Diga se é consignado, pedido particular ou kits/lembrancinhas." },
-    { n: "2", title: "Montamos o formato ideal", desc: "Sabores, quantidade, validade, reposição e entrega." },
-    { n: "3", title: "Entrega + acompanhamento", desc: "Consignado com controle simples e reposição combinada." },
-  ];
+const DEPOIMENTOS = [
+  {
+    nome: "Carlos M.",
+    contexto: "Dono de lanchonete · São José dos Campos",
+    texto:
+      "Coloquei no balcão e acabou em poucos dias. Os clientes pedem de volta. Produto bem apresentado e com giro rápido.",
+  },
+  {
+    nome: "Fernanda R.",
+    contexto: "Padaria · Jacareí",
+    texto:
+      "Produto com marca própria, fácil de expor e os clientes adoram. Ajudou bastante no ticket médio do caixa.",
+  },
+  {
+    nome: "Ana L.",
+    contexto: "Encomenda para chá de bebê",
+    texto:
+      "Pedi como lembrancinha e as convidadas amaram. Embalagem bonita e sabor marcante. Com certeza pedirei de novo.",
+  },
+];
 
-  const testimonials = [
-    {
-      name: "Parceiro (lanchonete)",
-      quote:
-        "Colocamos no caixa e começou a girar. Ajuda a aumentar o ticket e não dá trabalho.",
-    },
-    {
-      name: "Cliente",
-      quote:
-        "Sabor equilibrado e recheio muito bom. Dá vontade de levar mais de um!",
-    },
-    {
-      name: "Eventos/Presente",
-      quote:
-        "Peguei para lembrancinha e fez sucesso. Bem apresentável e gostoso.",
-    },
-  ];
+const PASSOS = [
+  {
+    n: "1",
+    titulo: "Chame no WhatsApp",
+    desc: "Diga que tem um estabelecimento e quer conhecer o consignado. Em minutos alinhamos os detalhes.",
+  },
+  {
+    n: "2",
+    titulo: "Combinamos tudo",
+    desc: "Quantidade inicial, sabores, prazo de entrega e forma de acerto. Sem letra miúda.",
+  },
+  {
+    n: "3",
+    titulo: "Você vende, a gente repõe",
+    desc: "O produto fica no seu balcão. Você vende e paga só o que saiu. Simples assim.",
+  },
+];
 
-  const faq = [
-    {
-      q: "Como funciona o consignado?",
-      a: "Você recebe a quantidade combinada e paga conforme as vendas. A reposição é combinada para manter giro e evitar sobra.",
-    },
-    {
-      q: "Vocês fazem pedidos particulares?",
-      a: "Sim! Trabalhamos com pedidos sob encomenda para consumo ou para presentear, mantendo o mesmo padrão de qualidade."
-    },
-    {
-      q: "Fazem lembrancinhas e kits para datas e eventos?",
-      a: "Sim! Fazemos kits e lembrancinhas para várias datas e eventos. Quanto antes chamar, melhor para garantir produção e personalização.",
-    },
-    {
-      q: "Como eu peço?",
-      a: "Pelo WhatsApp. Em poucos minutos alinhamos o melhor formato para você.",
-    },
-  ];
+const FAQ = [
+  {
+    q: "Como funciona o consignado?",
+    r: "Entregamos o produto no seu estabelecimento. Você vende e acerta o valor das vendas periodicamente. Sem pagamento adiantado.",
+  },
+  {
+    q: "Qual o pedido mínimo para consignado?",
+    r: "Combinamos a quantidade ideal para o seu fluxo de clientes. Chame no WhatsApp e ajustamos juntos.",
+  },
+  {
+    q: "Vocês fazem pedidos particulares?",
+    r: "Sim! Trabalhamos com pedidos sob encomenda para consumo ou presentear, com o mesmo padrão de qualidade.",
+  },
+  {
+    q: "Fazem lembrancinhas e kits para eventos?",
+    r: "Sim. Atendemos casamentos, aniversários, eventos corporativos, datas comemorativas e mais. Quanto antes entrar em contato, melhor para garantir a produção.",
+  },
+  {
+    q: "Como é feita a reposição do consignado?",
+    r: "Combinamos uma periodicidade que faz sentido para o seu estabelecimento. Quando o estoque cai, a gente repõe.",
+  },
+];
 
+// ─── Componentes auxiliares ────────────────────────────────────────────────────
+function BtnPrimary({ href, children, className = "" }) {
   return (
-    <div className="min-h-screen bg-[#0B0A09] text-white">
-      {/* HEADER */}
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#0B0A09]/70 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-          <a href="#inicio" className="flex items-center gap-3">
-            <div className="relative h-10 w-10 overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-[0_10px_30px_-12px_rgba(255,255,255,0.18)]">
-              <Image
-                src="/img/logo-doce-agrado.png"
-                alt="Logo Doce Agrado"
-                fill
-                className="object-contain p-0"
-                priority
-              />
-            </div>
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className={`inline-flex items-center justify-center gap-2 rounded-2xl bg-[#D1328C] px-6 py-3 text-sm font-bold text-white hover:bg-[#b52a79] transition ${className}`}
+    >
+      {children}
+    </a>
+  );
+}
 
+function BtnOutline({ href, children, className = "" }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className={`inline-flex items-center justify-center gap-2 rounded-2xl border border-[#4A0E2E]/20 bg-white px-6 py-3 text-sm font-bold text-[#4A0E2E] hover:bg-[#4A0E2E]/5 transition ${className}`}
+    >
+      {children}
+    </a>
+  );
+}
+
+// ─── Página ────────────────────────────────────────────────────────────────────
+export default function Home() {
+  return (
+    <div className="min-h-screen bg-[#FFF9FB] text-[#4A0E2E]">
+
+      {/* ── HEADER ─────────────────────────────────────────────────────────── */}
+      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-black/6 shadow-sm">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 gap-4">
+          {/* Logo */}
+          <a href="#inicio" className="flex items-center gap-2.5 shrink-0">
+            <div className="relative w-9 h-9 rounded-xl overflow-hidden border border-[#D1328C]/20">
+              <Image src="/img/logo-doce-agrado.png" alt="Doce Agrado" fill className="object-contain p-0.5" priority />
+            </div>
             <div className="leading-tight">
-              <div className="text-sm font-semibold tracking-wide">Doce Agrado</div>
-              <div className="text-xs text-white/60">Trufas artesanais • Consignado • Kits</div>
+              <p className="text-sm font-bold text-[#4A0E2E]">Doce Agrado</p>
+              <p className="text-xs text-[#4A0E2E]/50 hidden sm:block">Trufas artesanais</p>
             </div>
           </a>
 
-          <div className="flex items-center gap-2">
+          {/* Nav */}
+          <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-[#4A0E2E]/70">
+            <a href="#consignado" className="hover:text-[#D1328C] transition">Consignado</a>
+            <a href="#produtos" className="hover:text-[#D1328C] transition">Produtos</a>
+            <a href="#quem-somos" className="hover:text-[#D1328C] transition">Quem somos</a>
+            <a href="#faq" className="hover:text-[#D1328C] transition">FAQ</a>
+          </nav>
+
+          {/* CTAs */}
+          <div className="flex items-center gap-2 shrink-0">
             <Link
               href="/parceiro"
-              className="inline-flex rounded-2xl border border-white/15 bg-white/5 px-4 py-2 text-sm font-extrabold text-white hover:bg-white/10"
+              className="hidden sm:inline-flex text-sm font-semibold text-[#4A0E2E]/60 hover:text-[#4A0E2E] transition px-3 py-2 rounded-xl hover:bg-black/5"
             >
-              Área de Parceiros
+              Área do parceiro
             </Link>
-
-            <a
-              href={WHATSAPP_CONSIGNADO}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-[#F6E7D6] to-[#D1328C] px-4 py-2 text-sm font-extrabold text-[#1B120C] hover:opacity-95"
-            >
-              <span className="hidden sm:inline">Falar no WhatsApp</span>
-              <span className="sm:hidden">WhatsApp</span>
-            </a>
+            <BtnPrimary href={WA_CONSIGNADO}>
+              Falar no WhatsApp
+            </BtnPrimary>
           </div>
         </div>
       </header>
 
-      {/* HERO */}
+      {/* ── HERO ───────────────────────────────────────────────────────────── */}
       <section id="inicio" className="relative overflow-hidden">
-        <div className="pointer-events-none absolute -top-24 left-1/2 h-[420px] w-[420px] -translate-x-1/2 rounded-full bg-[#D1328C]/25 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-40 right-[-80px] h-[520px] w-[520px] rounded-full bg-[#F6E7D6]/10 blur-3xl" />
+        {/* Blobs decorativos */}
+        <div className="pointer-events-none absolute -top-32 -left-32 w-96 h-96 rounded-full bg-[#D1328C]/8 blur-3xl" />
+        <div className="pointer-events-none absolute top-1/2 -right-24 w-72 h-72 rounded-full bg-[#F6E7D6]/60 blur-3xl" />
 
-        <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 md:grid-cols-2 md:py-20">
-          <div className="flex flex-col justify-center">
-            <div className="mb-5 inline-flex w-fit items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-semibold text-white/80">
-              <span className="h-2 w-2 rounded-full bg-[#F6E7D6]" />
-              Consignado • Pedidos • Lembrancinhas & Kits
+        <div className="mx-auto max-w-6xl px-4 py-14 md:py-24 grid md:grid-cols-2 gap-12 items-center">
+          {/* Texto */}
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#D1328C]/25 bg-[#D1328C]/8 px-4 py-1.5 text-xs font-semibold text-[#D1328C] mb-6">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#D1328C] animate-pulse" />
+              Consignado · Pedidos · Kits & Lembrancinhas
             </div>
 
-            <h1 className="text-4xl font-black tracking-tight md:text-6xl">
-              Trufas artesanais para{" "}
-              <span className="bg-gradient-to-r from-[#F6E7D6] to-[#D1328C] bg-clip-text text-transparent">
-                vender
+            <h1 className="text-4xl md:text-5xl font-black tracking-tight leading-tight text-[#4A0E2E]">
+              Coloque nossas trufas{" "}
+              <span className="relative whitespace-nowrap">
+                <span className="relative z-10">no seu balcão.</span>
+                <svg className="absolute -bottom-1 left-0 w-full" viewBox="0 0 300 12" fill="none" aria-hidden>
+                  <path d="M2 9 Q75 2 150 9 Q225 16 298 9" stroke="#D1328C" strokeWidth="3" strokeLinecap="round" fill="none" />
+                </svg>
               </span>
-              ,{" "}
-              <span className="bg-gradient-to-r from-[#F6E7D6] to-[#D1328C] bg-clip-text text-transparent">
-                presentear
-              </span>{" "}
-              e{" "}
-              <span className="bg-gradient-to-r from-[#F6E7D6] to-[#D1328C] bg-clip-text text-transparent">
-                se apaixonar
-              </span>
-              .
+              <br />Pague só o que vender.
             </h1>
 
-            <p className="mt-5 max-w-xl text-base leading-relaxed text-white/70 md:text-lg">
-              A <strong className="text-white">Doce Agrado</strong> faz trufas recheadas com acabamento bonito e sabor marcante.
-              Temos 3 formatos: <strong className="text-white">consignado</strong> (nosso foco),{" "}
-              <strong className="text-white">pedidos particulares</strong> e{" "}
-              <strong className="text-white">kits/lembrancinhas</strong> para datas e eventos.
+            <p className="mt-5 text-base md:text-lg text-[#4A0E2E]/70 leading-relaxed max-w-lg">
+              A <strong className="text-[#4A0E2E]">Doce Agrado</strong> oferece trufas artesanais em{" "}
+              <strong className="text-[#4A0E2E]">consignado</strong> para bares, restaurantes, padarias, lanchonetes e mercados.
+              Sem risco, com produto diferenciado e de alto giro.
             </p>
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <a
-                href={WHATSAPP_CONSIGNADO}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-[#F6E7D6] to-[#D1328C] px-7 py-3 text-sm font-extrabold text-[#1B120C] hover:opacity-95"
-              >
+            <div className="mt-8 flex flex-col sm:flex-row gap-3">
+              <BtnPrimary href={WA_CONSIGNADO} className="text-base py-3.5 px-8">
                 Quero consignado
-              </a>
-              <a
-                href={WHATSAPP_PEDIDO}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-7 py-3 text-sm font-bold text-white/90 hover:bg-white/10"
-              >
-                Fazer pedido particular
-              </a>
-              <a
-                href={WHATSAPP_LEMBRANCINHAS}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-7 py-3 text-sm font-bold text-white/90 hover:bg-white/10"
-              >
-                Lembrancinhas / Kits
-              </a>
+              </BtnPrimary>
+              <BtnOutline href={WA_PEDIDO}>
+                Fazer um pedido
+              </BtnOutline>
             </div>
 
-            <div className="mt-10 grid gap-3 sm:grid-cols-3">
-              {stats.map((s) => (
-                <div key={s.label} className="rounded-3xl border border-white/10 bg-white/5 p-4">
-                  <div className="text-xs font-semibold text-white/60">{s.label}</div>
-                  <div className="mt-1 text-sm font-extrabold text-white">{s.value}</div>
-                </div>
-              ))}
+            {/* Micro-provas */}
+            <div className="mt-10 flex items-center gap-6 text-sm text-[#4A0E2E]/60">
+              <span className="flex items-center gap-1.5">
+                <span className="text-green-500">✓</span> Sem pagamento antecipado
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="text-green-500">✓</span> Produto com marca própria
+              </span>
             </div>
           </div>
 
-          {/* “Imagem”/mock premium */}
-          <div className="relative">
-            <div className="rounded-[28px] border border-white/10 bg-gradient-to-b from-white/10 to-white/5 p-6 shadow-[0_25px_80px_-30px_rgba(0,0,0,0.8)]">
-              <div className="flex items-center justify-between">
-                <div className="text-sm font-extrabold">Doce Agrado</div>
-                <div className="text-xs text-white/60">Trufas artesanais</div>
-              </div>
-
-              <div className="mt-6 grid grid-cols-2 gap-3">
-                <div className="aspect-[4/3] rounded-2xl bg-white/10 ring-1 ring-white/10" />
-                <div className="aspect-[4/3] rounded-2xl bg-white/10 ring-1 ring-white/10" />
-                <div className="aspect-[4/3] rounded-2xl bg-white/10 ring-1 ring-white/10" />
-                <div className="aspect-[4/3] rounded-2xl bg-white/10 ring-1 ring-white/10" />
-              </div>
-
-              <div className="mt-6 rounded-2xl border border-white/10 bg-[#0B0A09]/50 p-4">
-                <div className="text-sm font-extrabold">3 formas de pedir</div>
-                <div className="mt-1 text-sm text-white/70">
-                  Consignado • Pedido particular • Kits & lembrancinhas
-                </div>
-              </div>
-
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl bg-white/5 p-4 ring-1 ring-white/10">
-                  <div className="text-xs text-white/60">Consignado</div>
-                  <div className="mt-1 text-sm font-bold">No caixa/balcão, alto giro</div>
-                </div>
-                <div className="rounded-2xl bg-white/5 p-4 ring-1 ring-white/10">
-                  <div className="text-xs text-white/60">Datas</div>
-                  <div className="mt-1 text-sm font-bold">Eventos, brindes e kits</div>
-                </div>
+          {/* Foto hero */}
+          <div className="relative flex justify-center">
+            <div className="relative w-72 md:w-80 aspect-[3/4] rounded-[32px] overflow-hidden shadow-2xl border-4 border-white ring-1 ring-black/5">
+              <Image
+                src="/img/trufa-editada.jpg"
+                alt="Trufa artesanal Doce Agrado — recheio cremoso e viciante"
+                fill
+                className="object-cover object-center"
+                priority
+              />
+            </div>
+            {/* Badge flutuante */}
+            <div className="absolute -bottom-4 -left-4 md:-left-8 bg-white rounded-2xl shadow-lg border border-black/5 px-4 py-3 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#D1328C]/10 flex items-center justify-center text-lg">🍫</div>
+              <div>
+                <p className="text-xs text-[#4A0E2E]/50 font-medium">Consignado</p>
+                <p className="text-sm font-bold text-[#4A0E2E]">Pague conforme vende</p>
               </div>
             </div>
-
-            <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-[#F6E7D6]/10 blur-2xl" />
           </div>
         </div>
       </section>
 
-      {/* QUEM SOMOS */}
-      <section id="quem-somos" className="border-t border-white/10 bg-[#0B0A09]">
-        <div className="mx-auto max-w-6xl px-4 py-14">
-          <div className="grid gap-10 md:grid-cols-2 md:items-center">
+      {/* ── TRUST STRIP ────────────────────────────────────────────────────── */}
+      <section className="border-y border-[#D1328C]/10 bg-white">
+        <div className="mx-auto max-w-6xl px-4 py-8 grid grid-cols-1 sm:grid-cols-3 gap-6">
+          {BENEFICIOS.map((b) => (
+            <div key={b.titulo} className="flex items-start gap-4">
+              <div className="text-2xl shrink-0">{b.icon}</div>
+              <div>
+                <p className="font-bold text-[#4A0E2E] text-sm">{b.titulo}</p>
+                <p className="text-xs text-[#4A0E2E]/60 mt-0.5 leading-relaxed">{b.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── CONSIGNADO (seção principal) ───────────────────────────────────── */}
+      <section id="consignado" className="py-16 md:py-24">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            {/* Fotos empilhadas */}
+            <div className="relative hidden md:block">
+              <div className="relative w-full aspect-[4/5] rounded-[28px] overflow-hidden shadow-xl border-4 border-white ring-1 ring-black/5">
+                <Image
+                  src="/img/trufa-juntas-2.jpg"
+                  alt="Variedade de sabores — trufas Doce Agrado"
+                  fill
+                  className="object-cover object-center"
+                />
+              </div>
+              <div className="absolute -bottom-6 -right-6 w-44 h-44 rounded-[20px] overflow-hidden shadow-xl border-4 border-white ring-1 ring-black/5">
+                <Image
+                  src="/img/expositor_2.jpg"
+                  alt="Expositor Doce Agrado em ponto de venda"
+                  fill
+                  className="object-cover object-bottom"
+                />
+              </div>
+            </div>
+
             {/* Texto */}
             <div>
-              <h2 className="text-2xl font-black md:text-4xl">Quem somos</h2>
-
-              <p className="mt-4 text-base leading-relaxed text-white/70">
-                A <strong className="text-white">Doce Agrado</strong> é um projeto criado por{" "}
-                <strong className="text-white">Paulo e Lyvia</strong>, um casal junto há 8 anos.
-                Começamos em 2025 como uma renda extra e hoje levamos trufas artesanais para clientes e
-                parceiros que valorizam qualidade.
+              <span className="inline-block text-xs font-bold uppercase tracking-widest text-[#D1328C] mb-3">
+                Para estabelecimentos
+              </span>
+              <h2 className="text-3xl md:text-4xl font-black tracking-tight text-[#4A0E2E]">
+                Aumente o ticket do seu caixa sem nenhum risco
+              </h2>
+              <p className="mt-4 text-[#4A0E2E]/70 leading-relaxed">
+                Nosso modelo de consignado foi pensado para facilitar a vida do dono de estabelecimento.
+                Você não precisa investir adiantado — o produto fica no seu balcão e você paga conforme as vendas.
               </p>
 
-              <p className="mt-4 text-base leading-relaxed text-white/70">
-                Não trabalhamos com atalhos: usamos <strong className="text-white">produtos de qualidade</strong>,{" "}
-                <strong className="text-white">fruta de verdade</strong> e focamos em sabor, apresentação e confiança —
-                seja no <strong className="text-white">consignado</strong>, em{" "}
-                <strong className="text-white">pedidos particulares</strong> ou em{" "}
-                <strong className="text-white">kits para datas especiais</strong>.
-              </p>
+              <ul className="mt-6 space-y-3">
+                {[
+                  "Produto com marca própria, bem apresentado",
+                  "Sabor que fideliza — o cliente pede de volta",
+                  "Reposição organizada, sem complicação",
+                  "Acerto simples e transparente",
+                  "Funciona em bares, padarias, lanchonetes e mercados",
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-3 text-sm text-[#4A0E2E]">
+                    <span className="mt-0.5 w-5 h-5 rounded-full bg-[#D1328C]/10 flex items-center justify-center shrink-0">
+                      <span className="text-[#D1328C] text-xs">✓</span>
+                    </span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
 
-              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                <a
-                  href={WHATSAPP_PEDIDO}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-6 py-3 text-sm font-extrabold text-white hover:bg-white/10"
-                >
-                  Fazer pedido particular
-                </a>
-                <a
-                  href={WHATSAPP_CONSIGNADO}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-[#F6E7D6] to-[#D1328C] px-6 py-3 text-sm font-extrabold text-[#1B120C] hover:opacity-95"
-                >
-                  Quero consignado
-                </a>
+              <div className="mt-8">
+                <BtnPrimary href={WA_CONSIGNADO} className="text-base py-3.5 px-8">
+                  Quero levar para meu estabelecimento
+                </BtnPrimary>
               </div>
-            </div>
-
-            {/* Fotos (placeholders) */}
-            <div className="relative">
-              <div className="rounded-[28px] border border-white/10 bg-gradient-to-b from-white/10 to-white/5 p-4 shadow-[0_25px_80px_-40px_rgba(0,0,0,0.8)]">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="aspect-[4/5] rounded-2xl bg-white/10 ring-1 ring-white/10" />
-                  <div className="aspect-[4/5] rounded-2xl bg-white/10 ring-1 ring-white/10" />
-                </div>
-
-                <div className="mt-4 rounded-2xl border border-white/10 bg-[#0B0A09]/50 p-4">
-                  <div className="text-sm font-extrabold">Paulo & Lyvia</div>
-                  <div className="text-sm text-white/70">Criadores da Doce Agrado</div>
-                </div>
-              </div>
-
-              <div className="pointer-events-none absolute -left-8 -bottom-8 h-40 w-40 rounded-full bg-[#D1328C]/20 blur-2xl" />
             </div>
           </div>
         </div>
       </section>
 
-      {/* PILARES */}
-      <section className="border-t border-white/10 bg-[#0B0A09]">
-        <div className="mx-auto max-w-6xl px-4 py-14">
-          <h2 className="text-2xl font-black md:text-4xl">Tudo que a Doce Agrado oferece</h2>
-          <p className="mt-3 max-w-3xl text-white/70">
-            Escolha o objetivo (consignado, pedido particular ou lembrancinhas). A gente cuida do restante.
-          </p>
+      {/* ── GALERIA ────────────────────────────────────────────────────────── */}
+      <section id="produtos" className="py-16 bg-white border-y border-black/5">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="text-center mb-10">
+            <span className="inline-block text-xs font-bold uppercase tracking-widest text-[#D1328C] mb-3">
+              Nossos produtos
+            </span>
+            <h2 className="text-3xl md:text-4xl font-black tracking-tight text-[#4A0E2E]">
+              Feito com cuidado, apresentado com carinho
+            </h2>
+            <p className="mt-3 text-[#4A0E2E]/60 max-w-xl mx-auto">
+              Trufas artesanais com recheio saboroso, cobertura de qualidade e embalagem caprichada.
+            </p>
+          </div>
 
-          <div className="mt-10 grid gap-6 md:grid-cols-3">
-            {pillars.map((c) => (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+            {GALERIA.map((foto, i) => (
               <div
-                id={c.id}
-                key={c.title}
-                className="group rounded-[28px] border border-white/10 bg-gradient-to-b from-white/10 to-white/5 p-6 shadow-[0_25px_70px_-40px_rgba(0,0,0,0.85)] transition hover:-translate-y-1 hover:border-white/20"
+                key={i}
+                className="relative aspect-[3/4] rounded-2xl overflow-hidden shadow-sm ring-1 ring-black/5 hover:shadow-md transition hover:scale-[1.01]"
               >
-                <div className="mb-3 inline-flex w-fit rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold text-white/80">
-                  {c.tag}
-                </div>
-                <div className="text-lg font-extrabold md:text-xl">{c.title}</div>
-                <p className="mt-2 text-sm leading-relaxed text-white/70">{c.desc}</p>
+                <Image
+                  src={foto.src}
+                  alt={foto.alt}
+                  fill
+                  className="object-cover"
+                />
+              </div>
+            ))}
+          </div>
 
-                <ul className="mt-5 space-y-2 text-sm text-white/80">
-                  {c.bullets.map((b) => (
-                    <li key={b} className="flex gap-2">
-                      <span className="mt-2 h-1.5 w-1.5 rounded-full bg-[#F6E7D6]" />
-                      <span>{b}</span>
+          <div className="mt-8 text-center">
+            <a
+              href={INSTAGRAM}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-[#D1328C] hover:text-[#b52a79] transition"
+            >
+              Ver mais no Instagram @doceagrado7
+              <span>→</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* ── TAMBÉM FAZEMOS ─────────────────────────────────────────────────── */}
+      <section className="py-16 md:py-24">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="text-center mb-10">
+            <span className="inline-block text-xs font-bold uppercase tracking-widest text-[#D1328C] mb-3">
+              Outros formatos
+            </span>
+            <h2 className="text-3xl md:text-4xl font-black tracking-tight text-[#4A0E2E]">
+              Também atendemos você assim
+            </h2>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            {TAMBEM.map((t) => (
+              <div
+                key={t.titulo}
+                className="bg-white rounded-3xl border border-black/6 p-8 shadow-sm hover:shadow-md transition hover:-translate-y-0.5"
+              >
+                <div className="text-3xl mb-4">{t.icon}</div>
+                <span className="inline-block text-xs font-bold uppercase tracking-widest text-[#D1328C] mb-2">
+                  {t.tag}
+                </span>
+                <h3 className="text-xl font-black text-[#4A0E2E] mb-2">{t.titulo}</h3>
+                <p className="text-sm text-[#4A0E2E]/70 leading-relaxed mb-5">{t.desc}</p>
+                <ul className="space-y-2 mb-6">
+                  {t.bullets.map((b) => (
+                    <li key={b} className="flex items-center gap-2 text-sm text-[#4A0E2E]/80">
+                      <span className="text-[#D1328C]">✓</span> {b}
                     </li>
                   ))}
                 </ul>
-
-                <a
-                  href={c.cta.link}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-6 inline-flex w-full items-center justify-center rounded-2xl bg-white/10 px-5 py-3 text-sm font-extrabold text-white ring-1 ring-white/10 transition hover:bg-white/15"
-                >
-                  {c.cta.label}
-                </a>
+                <BtnOutline href={t.cta.link}>{t.cta.label}</BtnOutline>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* PROVA SOCIAL */}
-      <section className="border-t border-white/10 bg-gradient-to-b from-[#0B0A09] to-[#0F0D0B]">
-        <div className="mx-auto max-w-6xl px-4 py-14">
-          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-            <div>
-              <h2 className="text-2xl font-black md:text-4xl">Quando o produto é bom, ele gira.</h2>
-              <p className="mt-3 max-w-3xl text-white/70">
-                Sabor + apresentação + facilidade. Seja no consignado, no pedido particular ou em lembrancinhas.
-              </p>
+      {/* ── QUEM SOMOS ─────────────────────────────────────────────────────── */}
+      <section id="quem-somos" className="py-16 md:py-24 bg-white border-y border-black/5">
+        <div className="mx-auto max-w-6xl px-4 grid md:grid-cols-2 gap-12 items-center">
+          {/* Foto(s) */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="relative aspect-[3/4] rounded-2xl overflow-hidden shadow-md ring-1 ring-black/5 col-span-1">
+              <Image
+                src="/img/trufa-1.jpg"
+                alt="Trufa artesanal Doce Agrado"
+                fill
+                className="object-cover"
+              />
             </div>
+            <div className="relative aspect-[3/4] rounded-2xl overflow-hidden shadow-md ring-1 ring-black/5 col-span-1 mt-6">
+              <Image
+                src="/img/expositor.jpg"
+                alt="Expositor Doce Agrado em ponto de venda"
+                fill
+                className="object-cover"
+              />
+            </div>
+          </div>
+
+          {/* Texto */}
+          <div>
+            <span className="inline-block text-xs font-bold uppercase tracking-widest text-[#D1328C] mb-3">
+              Quem somos
+            </span>
+            <h2 className="text-3xl md:text-4xl font-black tracking-tight text-[#4A0E2E]">
+              Paulo e Lyvia, juntos há 8 anos
+            </h2>
+            <p className="mt-4 text-[#4A0E2E]/70 leading-relaxed">
+              A <strong className="text-[#4A0E2E]">Doce Agrado</strong> nasceu em 2025 como um projeto de casal,
+              com o objetivo de fazer trufas artesanais de verdade — sem atalhos, com ingredientes de qualidade
+              e atenção a cada detalhe.
+            </p>
+            <p className="mt-4 text-[#4A0E2E]/70 leading-relaxed">
+              Hoje atendemos parceiros em consignado, clientes com pedidos particulares e eventos com kits personalizados.
+              Tudo feito com o mesmo cuidado de quando começamos.
+            </p>
+
+            <div className="mt-6 inline-flex items-center gap-3 bg-[#FFF9FB] border border-[#D1328C]/15 rounded-2xl px-5 py-3">
+              <div className="relative w-10 h-10 rounded-xl overflow-hidden border border-[#D1328C]/20 shrink-0">
+                <Image src="/img/logo-doce-agrado.png" alt="Doce Agrado" fill className="object-contain p-1" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-[#4A0E2E]">@doceagrado7</p>
+                <p className="text-xs text-[#4A0E2E]/50">Acompanhe no Instagram</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── DEPOIMENTOS ────────────────────────────────────────────────────── */}
+      <section className="py-16 md:py-24">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="text-center mb-10">
+            <span className="inline-block text-xs font-bold uppercase tracking-widest text-[#D1328C] mb-3">
+              O que dizem
+            </span>
+            <h2 className="text-3xl md:text-4xl font-black tracking-tight text-[#4A0E2E]">
+              Quando o produto é bom, ele gira
+            </h2>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {DEPOIMENTOS.map((d) => (
+              <div
+                key={d.nome}
+                className="bg-white rounded-3xl border border-black/6 p-7 shadow-sm"
+              >
+                <div className="flex gap-0.5 mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <span key={i} className="text-yellow-400 text-sm">★</span>
+                  ))}
+                </div>
+                <p className="text-sm text-[#4A0E2E]/80 leading-relaxed italic">
+                  "{d.texto}"
+                </p>
+                <div className="mt-5 pt-4 border-t border-black/5">
+                  <p className="text-sm font-bold text-[#4A0E2E]">{d.nome}</p>
+                  <p className="text-xs text-[#4A0E2E]/50 mt-0.5">{d.contexto}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── COMO FUNCIONA ──────────────────────────────────────────────────── */}
+      <section className="py-16 md:py-24 bg-white border-y border-black/5">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="text-center mb-12">
+            <span className="inline-block text-xs font-bold uppercase tracking-widest text-[#D1328C] mb-3">
+              Processo
+            </span>
+            <h2 className="text-3xl md:text-4xl font-black tracking-tight text-[#4A0E2E]">
+              Como começar o consignado
+            </h2>
+            <p className="mt-3 text-[#4A0E2E]/60 max-w-xl mx-auto">
+              Do primeiro contato até o produto no seu balcão — é mais simples do que parece.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6 relative">
+            {/* Linha conectora */}
+            <div className="hidden md:block absolute top-8 left-1/6 right-1/6 h-px bg-[#D1328C]/20" style={{ left: "16.66%", right: "16.66%" }} />
+
+            {PASSOS.map((p) => (
+              <div key={p.n} className="relative text-center bg-[#FFF9FB] rounded-3xl border border-[#D1328C]/10 p-8">
+                <div className="w-14 h-14 rounded-2xl bg-[#D1328C] text-white text-xl font-black flex items-center justify-center mx-auto mb-5 shadow-md">
+                  {p.n}
+                </div>
+                <h3 className="text-lg font-black text-[#4A0E2E]">{p.titulo}</h3>
+                <p className="mt-2 text-sm text-[#4A0E2E]/60 leading-relaxed">{p.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-10 text-center">
+            <BtnPrimary href={WA_CONSIGNADO} className="text-base py-3.5 px-10">
+              Começar agora
+            </BtnPrimary>
+          </div>
+        </div>
+      </section>
+
+      {/* ── FAQ ────────────────────────────────────────────────────────────── */}
+      <section id="faq" className="py-16 md:py-24">
+        <div className="mx-auto max-w-4xl px-4">
+          <div className="text-center mb-10">
+            <span className="inline-block text-xs font-bold uppercase tracking-widest text-[#D1328C] mb-3">
+              Dúvidas
+            </span>
+            <h2 className="text-3xl md:text-4xl font-black tracking-tight text-[#4A0E2E]">
+              Perguntas frequentes
+            </h2>
+          </div>
+
+          <div className="space-y-3">
+            {FAQ.map((item) => (
+              <div
+                key={item.q}
+                className="bg-white rounded-2xl border border-black/6 px-6 py-5 shadow-sm"
+              >
+                <p className="font-bold text-[#4A0E2E]">{item.q}</p>
+                <p className="mt-2 text-sm text-[#4A0E2E]/70 leading-relaxed">{item.r}</p>
+              </div>
+            ))}
+          </div>
+
+          <p className="mt-8 text-center text-sm text-[#4A0E2E]/50">
+            Outra dúvida?{" "}
+            <a href={WA_CONSIGNADO} target="_blank" rel="noreferrer" className="text-[#D1328C] font-semibold hover:underline">
+              Chame no WhatsApp
+            </a>
+          </p>
+        </div>
+      </section>
+
+      {/* ── CTA FINAL ──────────────────────────────────────────────────────── */}
+      <section className="py-16 md:py-24 bg-[#4A0E2E]">
+        <div className="mx-auto max-w-4xl px-4 text-center">
+          <div className="relative w-16 h-16 rounded-2xl overflow-hidden border-2 border-white/20 mx-auto mb-6">
+            <Image src="/img/logo-doce-agrado.png" alt="Doce Agrado" fill className="object-contain p-1" />
+          </div>
+          <h2 className="text-3xl md:text-4xl font-black tracking-tight text-white">
+            Pronto para começar?
+          </h2>
+          <p className="mt-4 text-white/70 max-w-lg mx-auto leading-relaxed">
+            Chame no WhatsApp agora. Em poucos minutos combinamos os detalhes
+            e seu estabelecimento já pode ter nossas trufas no balcão.
+          </p>
+          <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
             <a
-              href={WHATSAPP_CONSIGNADO}
+              href={WA_CONSIGNADO}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-[#F6E7D6] to-[#D1328C] px-6 py-3 text-sm font-extrabold text-[#1B120C] hover:opacity-95"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#D1328C] px-8 py-4 text-base font-bold text-white hover:bg-[#b52a79] transition shadow-lg"
             >
               Quero consignado
             </a>
-          </div>
-
-          <div className="mt-10 grid gap-6 md:grid-cols-3">
-            {testimonials.map((t) => (
-              <div
-                key={t.name}
-                className="rounded-[28px] border border-white/10 bg-white/5 p-6 shadow-[0_25px_70px_-45px_rgba(0,0,0,0.85)]"
-              >
-                <div className="text-sm font-bold text-white">{t.name}</div>
-                <p className="mt-3 text-sm leading-relaxed text-white/70">“{t.quote}”</p>
-              </div>
-            ))}
+            <a
+              href={WA_KITS}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-8 py-4 text-base font-bold text-white hover:bg-white/15 transition"
+            >
+              Pedir kits / lembrancinhas
+            </a>
           </div>
         </div>
       </section>
 
-      {/* COMO FUNCIONA */}
-      <section id="como-funciona" className="border-t border-white/10 bg-[#0B0A09]">
-        <div className="mx-auto max-w-6xl px-4 py-14">
-          <h2 className="text-2xl font-black md:text-4xl">Como funciona</h2>
-          <p className="mt-3 max-w-3xl text-white/70">
-            Processo simples — do primeiro contato até a reposição (ou a entrega do seu pedido).
-          </p>
-
-          <div className="mt-10 grid gap-6 md:grid-cols-3">
-            {steps.map((s) => (
-              <div
-                key={s.n}
-                className="rounded-[28px] border border-white/10 bg-white/5 p-6 shadow-[0_25px_70px_-45px_rgba(0,0,0,0.85)]"
-              >
-                <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#F6E7D6] to-[#D1328C] text-sm font-black text-[#1B120C]">
-                  {s.n}
-                </div>
-                <div className="text-lg font-extrabold">{s.title}</div>
-                <p className="mt-2 text-sm leading-relaxed text-white/70">{s.desc}</p>
-              </div>
-            ))}
+      {/* ── FOOTER ─────────────────────────────────────────────────────────── */}
+      <footer className="border-t border-black/8 bg-white">
+        <div className="mx-auto max-w-6xl px-4 py-10 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-2.5">
+            <div className="relative w-9 h-9 rounded-xl overflow-hidden border border-[#D1328C]/20">
+              <Image src="/img/logo-doce-agrado.png" alt="Doce Agrado" fill className="object-contain p-0.5" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-[#4A0E2E]">Doce Agrado</p>
+              <p className="text-xs text-[#4A0E2E]/50">Trufas artesanais</p>
+            </div>
           </div>
 
-          <div className="mt-10 rounded-[28px] border border-white/10 bg-gradient-to-r from-white/10 to-white/5 p-6 shadow-[0_25px_80px_-50px_rgba(0,0,0,0.9)] md:p-8">
-            <div className="grid gap-6 md:grid-cols-[1.6fr_1fr] md:items-center">
-              <div>
-                <div className="text-xl font-black md:text-2xl">Quer falar com a gente agora?</div>
-                <p className="mt-2 text-white/70">
-                  Escolha o assunto e a gente já te atende no WhatsApp.
-                </p>
-              </div>
-              <div className="flex flex-col gap-3">
-                <a
-                  href={WHATSAPP_CONSIGNADO}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-[#F6E7D6] to-[#D1328C] px-6 py-3 text-sm font-extrabold text-[#1B120C] hover:opacity-95"
-                >
-                  Consignado
-                </a>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <a
-                    href={WHATSAPP_PEDIDO}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-6 py-3 text-sm font-extrabold text-white hover:bg-white/10"
-                  >
-                    Pedido particular
-                  </a>
-                  <a
-                    href={WHATSAPP_LEMBRANCINHAS}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-6 py-3 text-sm font-extrabold text-white hover:bg-white/10"
-                  >
-                    Kits / Lembrancinhas
-                  </a>
-                </div>
-                <a
-                  href={INSTAGRAM_LINK}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-6 py-3 text-sm font-extrabold text-white hover:bg-white/10"
-                >
-                  Ver Instagram
-                </a>
-              </div>
-            </div>
+          <div className="flex items-center gap-3">
+            <a
+              href={INSTAGRAM}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 rounded-xl border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-[#4A0E2E] hover:bg-black/5 transition"
+            >
+              Instagram
+            </a>
+            <BtnPrimary href={WA_CONSIGNADO}>
+              WhatsApp
+            </BtnPrimary>
           </div>
         </div>
-      </section>
-
-      {/* FAQ */}
-      <section id="faq" className="border-t border-white/10 bg-[#0F0D0B]">
-        <div className="mx-auto max-w-6xl px-4 py-14">
-          <h2 className="text-2xl font-black md:text-4xl">Dúvidas frequentes</h2>
-          <p className="mt-3 max-w-3xl text-white/70">Se preferir, chama no WhatsApp e a gente te orienta.</p>
-
-          <div className="mt-10 grid gap-6 md:grid-cols-2">
-            {faq.map((item) => (
-              <div
-                key={item.q}
-                className="rounded-[28px] border border-white/10 bg-white/5 p-6 shadow-[0_25px_70px_-45px_rgba(0,0,0,0.85)]"
-              >
-                <div className="text-base font-extrabold">{item.q}</div>
-                <p className="mt-2 text-sm leading-relaxed text-white/70">{item.a}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* FOOTER */}
-      <footer className="border-t border-white/10 bg-[#0B0A09]">
-        <div className="mx-auto max-w-6xl px-4 py-10">
-          <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-center gap-3">
-              <a href="#inicio" className="flex items-center gap-3">
-                <div className="relative h-10 w-10 overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-[0_10px_30px_-12px_rgba(255,255,255,0.18)]">
-                  <Image
-                    src="/img/logo-doce-agrado.png"
-                    alt="Logo Doce Agrado"
-                    fill
-                    className="object-contain p-0"
-                    priority
-                  />
-                </div>
-
-                <div className="leading-tight">
-                  <div className="text-sm font-semibold tracking-wide">Doce Agrado</div>
-                  <div className="text-xs text-white/60">
-                    Trufas artesanais • Consignado • Kits
-                  </div>
-                </div>
-              </a>
-            </div>
-
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <a
-                href={INSTAGRAM_LINK}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-extrabold text-white hover:bg-white/10"
-              >
-                Instagram
-              </a>
-              <a
-                href={WHATSAPP_CONSIGNADO}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-[#F6E7D6] to-[#D1328C] px-5 py-3 text-sm font-extrabold text-[#1B120C] hover:opacity-95"
-              >
-                WhatsApp
-              </a>
-            </div>
-          </div>
-
-          <div className="mt-8 text-xs text-white/40">
-            © {new Date().getFullYear()} Doce Agrado. Todos os direitos reservados.
-          </div>
+        <div className="border-t border-black/5 text-center py-4 text-xs text-[#4A0E2E]/40">
+          © {new Date().getFullYear()} Doce Agrado · Todos os direitos reservados
         </div>
       </footer>
+
     </div>
   );
 }

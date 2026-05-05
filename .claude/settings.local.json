@@ -9,7 +9,9 @@
       "Bash(node --env-file=.env.local scripts/fix-datas-2026.cjs)",
       "Bash(node --env-file=.env.local scripts/seed-hamburgueria168-nabrasa.cjs)",
       "Bash(node --env-file=.env.local scripts/seed-regiane.cjs)",
-      "Bash(node --env-file=.env.local scripts/seed-tripburger.cjs)"
+      "Bash(node --env-file=.env.local scripts/seed-tripburger.cjs)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }

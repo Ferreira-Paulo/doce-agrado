@@ -35,8 +35,9 @@ export default function Modal({ open, title, onClose, children }) {
 
       {/* modal */}
       <div className="relative w-full max-w-xl rounded-2xl bg-white shadow-xl border border-black/10
-                      opacity-100 scale-100 translate-y-0 transition-transform duration-150">
-        <div className="flex items-center justify-between px-6 py-4 border-b">
+                      opacity-100 scale-100 translate-y-0 transition-transform duration-150
+                      max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between px-6 py-4 border-b shrink-0">
           <h3 className="text-lg font-bold text-[#4A0E2E]">{title}</h3>
 
           <button
@@ -49,7 +50,7 @@ export default function Modal({ open, title, onClose, children }) {
           </button>
         </div>
 
-        <div className="px-6 py-5">{children}</div>
+        <div className="px-6 py-5 overflow-y-auto">{children}</div>
       </div>
     </div>
   );

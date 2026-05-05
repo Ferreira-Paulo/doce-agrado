@@ -4,7 +4,12 @@
       "Bash(npm install *)",
       "Bash(node -e \"require\\('lucide-react'\\)\")",
       "Bash(npm run *)",
-      "Bash(node -e \"console.log\\(require\\('crypto'\\).randomBytes\\(32\\).toString\\('base64'\\)\\)\")"
+      "Bash(node -e \"console.log\\(require\\('crypto'\\).randomBytes\\(32\\).toString\\('base64'\\)\\)\")",
+      "Bash(grep -v \"\\\\.claude\\\\\\\\\\\\\\\\worktrees\")",
+      "Bash(node --env-file=.env.local scripts/fix-datas-2026.cjs)",
+      "Bash(node --env-file=.env.local scripts/seed-hamburgueria168-nabrasa.cjs)",
+      "Bash(node --env-file=.env.local scripts/seed-regiane.cjs)",
+      "Bash(node --env-file=.env.local scripts/seed-tripburger.cjs)"
     ]
   }
 }

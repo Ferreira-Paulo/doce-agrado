@@ -17,11 +17,41 @@ import EntregaForm from "./components/EntregaForm";
 import ParceiroForm from "./components/ParceiroForm";
 import AdminFilters from "./components/AdminFilters";
 import PartnerSection from "./components/PartnerSection";
+import CatalogoTab from "./components/CatalogoTab";
+import FinanceiroTab from "./components/FinanceiroTab";
 import Modal from "@/components/ui/Modal";
 
 import { auth } from "@/lib/firebase/client";
 import { apiFetch } from "@/lib/auth/apiFetch";
 import { onIdTokenChanged, signOut, getIdTokenResult } from "firebase/auth";
+
+const TABS = [
+  { id: "entregas", label: "Entregas & Pagamentos" },
+  { id: "catalogo", label: "Catálogo" },
+  { id: "financeiro", label: "Financeiro" },
+];
+
+function TabBar({ active, onChange }) {
+  return (
+    <div className="border-b border-black/8 mb-8">
+      <div className="flex">
+        {TABS.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => onChange(t.id)}
+            className={`px-5 py-3 text-sm font-semibold transition border-b-2 -mb-px ${
+              active === t.id
+                ? "border-[#D1328C] text-[#D1328C]"
+                : "border-transparent text-[#4A0E2E]/50 hover:text-[#4A0E2E]"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function AdminPage() {
   const router = useRouter();
@@ -29,12 +59,14 @@ export default function AdminPage() {
 
   const [user, setUser] = useState(null);
   const [entregas, setEntregas] = useState([]);
+  const [sabores, setSabores] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("entregas");
 
   // Modal
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalType, setModalType] = useState(null); // "entrega" | "pagamento" | "parceiro"
-  const [modalMode, setModalMode] = useState("create"); // "create" | "edit"
+  const [modalType, setModalType] = useState(null);
+  const [modalMode, setModalMode] = useState("create");
   const [editDeliveryId, setEditDeliveryId] = useState(null);
 
   // Forms
@@ -45,13 +77,14 @@ export default function AdminPage() {
   });
   const [novaEntrega, setNovaEntrega] = useState({
     parceiro: "",
-    quantidade: "",
+    itens: [{ sabor: "", quantidade: "" }],
     valor_unitario: "3.5",
     data: new Date().toISOString().slice(0, 10),
+    data_validade: "",
   });
   const [novoParceiro, setNovoParceiro] = useState({ username: "", password: "" });
 
-  // Filtros e ordenação
+  // Filtros
   const [busca, setBusca] = useState("");
   const [filtroParceiro, setFiltroParceiro] = useState("__all");
   const [filtroStatus, setFiltroStatus] = useState("todas");
@@ -89,17 +122,24 @@ export default function AdminPage() {
       });
 
       try {
-        const res = await apiFetch("/api/entregas", {}, fbUser);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        const arr = Array.isArray(data) ? data : [];
+        const [entregasRes, saboresRes] = await Promise.all([
+          apiFetch("/api/entregas", {}, fbUser),
+          apiFetch("/api/admin/sabores", {}, fbUser),
+        ]);
+
+        if (!entregasRes.ok) throw new Error(`HTTP ${entregasRes.status}`);
+        const entregasData = await entregasRes.json();
+        const arr = Array.isArray(entregasData) ? entregasData : [];
         setEntregas(arr);
+
+        const saboresData = saboresRes.ok ? await saboresRes.json() : [];
+        setSabores(Array.isArray(saboresData) ? saboresData : []);
 
         const primeiro = arr?.[0]?.parceiro || "";
         setNovoPagamento((p) => ({ ...p, parceiro: p.parceiro || primeiro }));
         setNovaEntrega((e) => ({ ...e, parceiro: e.parceiro || primeiro }));
       } catch (err) {
-        console.error("Erro ao carregar entregas:", err);
+        console.error("Erro ao carregar dados:", err);
         toast("Não foi possível carregar os dados. Recarregue a página.", "error");
       } finally {
         setLoading(false);
@@ -123,9 +163,7 @@ export default function AdminPage() {
     const q = busca.trim().toLowerCase();
 
     const filtered = entregas
-      .filter((p) =>
-        filtroParceiro === "__all" ? true : p.parceiro === filtroParceiro
-      )
+      .filter((p) => filtroParceiro === "__all" ? true : p.parceiro === filtroParceiro)
       .filter((p) => {
         if (!q) return true;
         return (
@@ -147,11 +185,8 @@ export default function AdminPage() {
         }
         return { ...p, entregas: list };
       })
-      .filter((p) =>
-        filtroStatus === "todas" ? true : (p.entregas || []).length > 0
-      );
+      .filter((p) => filtroStatus === "todas" ? true : (p.entregas || []).length > 0);
 
-    // Ordenação
     const withMeta = filtered.map((p) => {
       const r = resumoEntregas(p.entregas || []);
       const lastDate = (p.entregas || []).reduce(
@@ -177,15 +212,34 @@ export default function AdminPage() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const list = await res.json();
       setEntregas(Array.isArray(list) ? list : []);
-    } catch (err) {
-      console.error("Erro ao recarregar entregas:", err);
+    } catch {
       toast("Erro ao atualizar os dados.", "error");
     }
   }
 
-  // ─── Abrir modais ────────────────────────────────────────────────────
+  async function recarregarSabores() {
+    const fbUser = auth.currentUser;
+    if (!fbUser) return;
+    try {
+      const res = await apiFetch("/api/admin/sabores", {}, fbUser);
+      if (!res.ok) return;
+      const data = await res.json();
+      setSabores(Array.isArray(data) ? data : []);
+    } catch {
+      // silently fail — not critical
+    }
+  }
+
+  // ─── Modais ──────────────────────────────────────────────────────────
+
   function openNovaEntrega(parceiro = "") {
-    setNovaEntrega((e) => ({ ...e, parceiro: parceiro || e.parceiro, quantidade: "", data: new Date().toISOString().slice(0, 10) }));
+    setNovaEntrega((e) => ({
+      ...e,
+      parceiro: parceiro || e.parceiro,
+      itens: [{ sabor: "", quantidade: "" }],
+      data: new Date().toISOString().slice(0, 10),
+      data_validade: "",
+    }));
     setModalMode("create");
     setModalType("entrega");
     setModalOpen(true);
@@ -194,9 +248,13 @@ export default function AdminPage() {
   function openEditEntrega(parceiro, entrega) {
     setNovaEntrega({
       parceiro,
-      quantidade: String(entrega.quantidade),
-      valor_unitario: String(entrega.valor_unitario),
-      data: entrega.data,
+      itens:
+        Array.isArray(entrega.itens) && entrega.itens.length > 0
+          ? entrega.itens.map((i) => ({ sabor: i.sabor || "", quantidade: String(i.quantidade || "") }))
+          : [{ sabor: "", quantidade: String(entrega.quantidade || "") }],
+      valor_unitario: String(entrega.valor_unitario || ""),
+      data: entrega.data || "",
+      data_validade: entrega.data_validade || "",
     });
     setEditDeliveryId(entrega.id);
     setModalMode("edit");
@@ -217,6 +275,7 @@ export default function AdminPage() {
   }
 
   // ─── Handlers ────────────────────────────────────────────────────────
+
   async function registrarPagamento() {
     if (!novoPagamento.parceiro) { toast("Selecione um parceiro.", "error"); return; }
     if (!novoPagamento.valor || isNaN(Number(novoPagamento.valor))) { toast("Informe um valor válido.", "error"); return; }
@@ -228,12 +287,10 @@ export default function AdminPage() {
         body: JSON.stringify({ ...novoPagamento, valor: Number(novoPagamento.valor) }),
       });
       const data = await res.json();
-
       if (!res.ok || !data?.success) { toast(data?.error || "Falha ao registrar pagamento.", "error"); return; }
 
       await recarregarEntregas();
       closeModal();
-
       const restante = Number(data.restante || 0);
       toast(
         restante > 0
@@ -250,19 +307,36 @@ export default function AdminPage() {
 
   async function registrarEntrega() {
     if (!novaEntrega.parceiro) { toast("Selecione um parceiro.", "error"); return; }
-    if (!novaEntrega.quantidade || isNaN(Number(novaEntrega.quantidade))) { toast("Informe uma quantidade válida.", "error"); return; }
+
+    const itensValidos = (novaEntrega.itens || []).filter(
+      (i) => i.sabor && Number(i.quantidade) > 0
+    );
+    if (itensValidos.length === 0) {
+      toast("Adicione pelo menos um sabor com quantidade válida.", "error");
+      return;
+    }
+    if (!novaEntrega.valor_unitario || Number(novaEntrega.valor_unitario) <= 0) {
+      toast("Informe um valor unitário válido.", "error");
+      return;
+    }
 
     setSubmitting(true);
     try {
       const isEdit = modalMode === "edit";
-      const method = isEdit ? "PATCH" : "POST";
-      const body = isEdit
-        ? { parceiro: novaEntrega.parceiro, deliveryId: editDeliveryId, quantidade: Number(novaEntrega.quantidade), valor_unitario: Number(novaEntrega.valor_unitario), data: novaEntrega.data }
-        : { ...novaEntrega, quantidade: Number(novaEntrega.quantidade), valor_unitario: Number(novaEntrega.valor_unitario) };
+      const payload = {
+        parceiro: novaEntrega.parceiro,
+        itens: itensValidos.map((i) => ({ sabor: i.sabor, quantidade: Number(i.quantidade) })),
+        valor_unitario: Number(novaEntrega.valor_unitario),
+        data: novaEntrega.data,
+        ...(novaEntrega.data_validade ? { data_validade: novaEntrega.data_validade } : {}),
+      };
+      if (isEdit) payload.deliveryId = editDeliveryId;
 
-      const res = await apiFetch("/api/entregas", { method, body: JSON.stringify(body) });
+      const res = await apiFetch("/api/entregas", {
+        method: isEdit ? "PATCH" : "POST",
+        body: JSON.stringify(payload),
+      });
       const data = await res.json();
-
       if (!data.success) { toast(data.error || "Erro ao salvar entrega.", "error"); return; }
 
       await recarregarEntregas();
@@ -276,7 +350,8 @@ export default function AdminPage() {
   }
 
   async function handleDelete(parceiro, entrega) {
-    const confirmMsg = `Excluir entrega de ${entrega.quantidade} trufas em ${toBRDate(entrega.data)}?\n\nEssa ação não pode ser desfeita.`;
+    const { quantidade } = calcEntrega(entrega);
+    const confirmMsg = `Excluir entrega de ${quantidade} trufas em ${toBRDate(entrega.data)}?\n\nEssa ação não pode ser desfeita.`;
     if (!window.confirm(confirmMsg)) return;
 
     try {
@@ -285,9 +360,7 @@ export default function AdminPage() {
         body: JSON.stringify({ parceiro, deliveryId: entrega.id }),
       });
       const data = await res.json();
-
       if (!data.success) { toast(data.error || "Erro ao excluir.", "error"); return; }
-
       await recarregarEntregas();
       toast("Entrega excluída.", "success");
     } catch {
@@ -306,7 +379,6 @@ export default function AdminPage() {
         body: JSON.stringify(novoParceiro),
       });
       const data = await res.json();
-
       if (!data.success) { toast(data.error || "Erro ao criar parceiro.", "error"); return; }
 
       await recarregarEntregas();
@@ -321,16 +393,24 @@ export default function AdminPage() {
   }
 
   function exportCSV() {
-    const rows = [["Parceiro", "Data", "Quantidade", "Valor Unitário", "Total", "Total Pago", "Saldo", "Situação"]];
+    const rows = [
+      ["Parceiro", "Data", "Validade", "Sabores", "Qtd. Total", "Valor Unit.", "Total", "Total Pago", "Saldo", "Situação"],
+    ];
 
     for (const { parceiro, entregas: ents } of entregas) {
       for (const e of ents || []) {
-        const { total, totalPago, saldo } = calcEntrega(e);
+        const { total, totalPago, saldo, quantidade } = calcEntrega(e);
         const sit = saldo === 0 ? "Pago" : saldo < total ? "Parcial" : "Pendente";
+        const saboresStr = Array.isArray(e.itens) && e.itens.length > 0
+          ? e.itens.map((i) => `${i.sabor}(${i.quantidade})`).join(", ")
+          : "-";
+
         rows.push([
           parceiro,
           e.data,
-          e.quantidade,
+          e.data_validade || "-",
+          saboresStr,
+          quantidade,
           String(e.valor_unitario).replace(".", ","),
           total.toFixed(2).replace(".", ","),
           totalPago.toFixed(2).replace(".", ","),
@@ -357,6 +437,7 @@ export default function AdminPage() {
   }
 
   // ─── Loading skeleton ─────────────────────────────────────────────────
+
   if (loading) {
     return (
       <>
@@ -383,7 +464,7 @@ export default function AdminPage() {
     : "";
 
   const mostrados = entregasFiltradasPorParceiro.length;
-  const total = entregas.length;
+  const totalParceiros = entregas.length;
 
   return (
     <>
@@ -391,13 +472,12 @@ export default function AdminPage() {
 
       <div className="min-h-screen bg-[#FFF9FB] pt-14 px-4 py-8 md:px-8">
         <div className="max-w-6xl mx-auto">
+          {/* Cabeçalho global */}
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8">
             <PageHeader
               title="Dashboard Admin"
-              subtitle="Gerencie entregas e pagamentos de todos os parceiros."
+              subtitle="Painel administrativo completo da Doce Agrado."
             />
-
-            {/* Ações globais */}
             <div className="flex gap-2 shrink-0">
               <button
                 onClick={exportCSV}
@@ -416,70 +496,87 @@ export default function AdminPage() {
             </div>
           </div>
 
+          {/* Cards de resumo sempre visíveis */}
           <SummaryCardsAdmin resumo={resumoGeral} />
 
-          {/* Ações rápidas */}
-          <div className="flex flex-col md:flex-row gap-3 mb-6">
-            <button
-              onClick={() => openNovaEntrega()}
-              className="bg-[#4A0E2E] text-white px-5 py-3 rounded-2xl font-semibold hover:opacity-90 transition"
-            >
-              + Nova Entrega
-            </button>
-            <button
-              onClick={() => openPagar()}
-              className="bg-[#D1328C] text-white px-5 py-3 rounded-2xl font-semibold hover:bg-[#b52a79] transition"
-            >
-              + Novo Pagamento
-            </button>
-          </div>
+          {/* Abas */}
+          <TabBar active={activeTab} onChange={setActiveTab} />
 
-          <AdminFilters
-            parceiros={parceiros}
-            filtroParceiro={filtroParceiro}
-            setFiltroParceiro={setFiltroParceiro}
-            filtroStatus={filtroStatus}
-            setFiltroStatus={setFiltroStatus}
-            ordenacao={ordenacao}
-            setOrdenacao={setOrdenacao}
-            busca={busca}
-            setBusca={setBusca}
-          />
+          {/* ── Aba: Entregas & Pagamentos ── */}
+          {activeTab === "entregas" && (
+            <>
+              <div className="flex flex-col md:flex-row gap-3 mb-6">
+                <button
+                  onClick={() => openNovaEntrega()}
+                  className="bg-[#4A0E2E] text-white px-5 py-3 rounded-2xl font-semibold hover:opacity-90 transition"
+                >
+                  + Nova Entrega
+                </button>
+                <button
+                  onClick={() => openPagar()}
+                  className="bg-[#D1328C] text-white px-5 py-3 rounded-2xl font-semibold hover:bg-[#b52a79] transition"
+                >
+                  + Novo Pagamento
+                </button>
+              </div>
 
-          {/* Cabeçalho da lista */}
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-[#4A0E2E]">Parceiros</h2>
-            <p className="text-sm text-[#4A0E2E]/50">
-              {mostrados === total
-                ? `${total} parceiro${total !== 1 ? "s" : ""}`
-                : `${mostrados} de ${total} parceiros`}
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            {entregasFiltradasPorParceiro.map((p) => (
-              <PartnerSection
-                key={p.parceiro}
-                parceiro={p.parceiro}
-                entregas={p.entregas || []}
-                onPagar={openPagar}
-                onEdit={openEditEntrega}
-                onDelete={handleDelete}
+              <AdminFilters
+                parceiros={parceiros}
+                filtroParceiro={filtroParceiro}
+                setFiltroParceiro={setFiltroParceiro}
+                filtroStatus={filtroStatus}
+                setFiltroStatus={setFiltroStatus}
+                ordenacao={ordenacao}
+                setOrdenacao={setOrdenacao}
+                busca={busca}
+                setBusca={setBusca}
               />
-            ))}
 
-            {entregasFiltradasPorParceiro.length === 0 && (
-              <div className="bg-white rounded-2xl shadow-sm border border-black/5 p-12 text-center">
-                <Package className="w-10 h-10 text-[#4A0E2E]/20 mx-auto mb-3" />
-                <p className="text-[#4A0E2E]/60 font-medium">
-                  Nenhum resultado para os filtros atuais.
-                </p>
-                <p className="text-sm text-[#4A0E2E]/40 mt-1">
-                  Tente ajustar os filtros acima.
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-[#4A0E2E]">Parceiros</h2>
+                <p className="text-sm text-[#4A0E2E]/50">
+                  {mostrados === totalParceiros
+                    ? `${totalParceiros} parceiro${totalParceiros !== 1 ? "s" : ""}`
+                    : `${mostrados} de ${totalParceiros} parceiros`}
                 </p>
               </div>
-            )}
-          </div>
+
+              <div className="space-y-4">
+                {entregasFiltradasPorParceiro.map((p) => (
+                  <PartnerSection
+                    key={p.parceiro}
+                    parceiro={p.parceiro}
+                    entregas={p.entregas || []}
+                    onPagar={openPagar}
+                    onEdit={openEditEntrega}
+                    onDelete={handleDelete}
+                  />
+                ))}
+
+                {entregasFiltradasPorParceiro.length === 0 && (
+                  <div className="bg-white rounded-2xl shadow-sm border border-black/5 p-12 text-center">
+                    <Package className="w-10 h-10 text-[#4A0E2E]/20 mx-auto mb-3" />
+                    <p className="text-[#4A0E2E]/60 font-medium">
+                      Nenhum resultado para os filtros atuais.
+                    </p>
+                    <p className="text-sm text-[#4A0E2E]/40 mt-1">
+                      Tente ajustar os filtros acima.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* ── Aba: Catálogo ── */}
+          {activeTab === "catalogo" && (
+            <CatalogoTab sabores={sabores} onRecarregar={recarregarSabores} />
+          )}
+
+          {/* ── Aba: Financeiro ── */}
+          {activeTab === "financeiro" && (
+            <FinanceiroTab entregas={entregas} />
+          )}
         </div>
       </div>
 
@@ -487,6 +584,7 @@ export default function AdminPage() {
         {modalType === "entrega" && (
           <EntregaForm
             entregas={entregas}
+            sabores={sabores}
             novaEntrega={novaEntrega}
             setNovaEntrega={setNovaEntrega}
             onSubmit={registrarEntrega}

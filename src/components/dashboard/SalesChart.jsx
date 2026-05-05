@@ -13,7 +13,10 @@ function buildMonthlyData(entregas) {
     const d = String(e.data || "");
     if (!d) continue;
     const key = d.slice(0, 7); // "YYYY-MM"
-    map[key] = (map[key] || 0) + Number(e.quantidade || 0);
+    const qtd = Array.isArray(e.itens) && e.itens.length > 0
+      ? e.itens.reduce((acc, i) => acc + Number(i.quantidade || 0), 0)
+      : Number(e.quantidade || 0);
+    map[key] = (map[key] || 0) + qtd;
   }
   const sorted = Object.entries(map).sort(([a], [b]) => a.localeCompare(b)).slice(-8);
   return sorted.map(([key, qtd]) => {

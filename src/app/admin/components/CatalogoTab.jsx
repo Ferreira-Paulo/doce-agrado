@@ -19,6 +19,9 @@ export default function CatalogoTab({ sabores, ingredientes = [], onRecarregar }
   const [editandoNome, setEditandoNome] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  const [editandoEstoqueId, setEditandoEstoqueId] = useState(null);
+  const [editandoEstoqueValor, setEditandoEstoqueValor] = useState("");
+
   const [receitaModal, setReceitaModal] = useState(null);
   const [receitaItens, setReceitaItens] = useState([]);
 
@@ -102,6 +105,27 @@ export default function CatalogoTab({ sabores, ingredientes = [], onRecarregar }
       if (!data.success) { toast(data.error || "Erro ao editar.", "error"); return; }
       setEditandoId(null);
       toast("Sabor atualizado!", "success");
+      onRecarregar();
+    } catch { toast("Erro inesperado.", "error"); }
+    finally { setSubmitting(false); }
+  }
+
+  async function salvarEstoque(id) {
+    const valor = Number(editandoEstoqueValor);
+    if (!Number.isFinite(valor) || valor < 0 || !Number.isInteger(valor)) {
+      toast("Quantidade inválida. Informe um número inteiro maior ou igual a 0.", "error");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await apiFetch("/api/admin/sabores", {
+        method: "PATCH",
+        body: JSON.stringify({ id, estoque: valor }),
+      });
+      const data = await res.json();
+      if (!data.success) { toast(data.error || "Erro ao atualizar estoque.", "error"); return; }
+      setEditandoEstoqueId(null);
+      toast("Estoque atualizado!", "success");
       onRecarregar();
     } catch { toast("Erro inesperado.", "error"); }
     finally { setSubmitting(false); }
@@ -199,9 +223,37 @@ export default function CatalogoTab({ sabores, ingredientes = [], onRecarregar }
                     <span className={`flex-1 text-sm font-semibold min-w-0 truncate ${s.ativo === false ? "text-[#4A0E2E]/30 line-through" : "text-[#4A0E2E]"}`}>
                       {s.nome}
                     </span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${badge.cls}`}>
-                      {badge.label}
-                    </span>
+                    {editandoEstoqueId === s.id ? (
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={editandoEstoqueValor}
+                          onChange={(e) => setEditandoEstoqueValor(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") salvarEstoque(s.id);
+                            if (e.key === "Escape") setEditandoEstoqueId(null);
+                          }}
+                          autoFocus
+                          className="w-20 px-2 py-1 border border-[#D1328C]/40 rounded-lg text-sm text-[#4A0E2E] text-center focus:outline-none focus:ring-2 focus:ring-[#D1328C]/30"
+                        />
+                        <button onClick={() => salvarEstoque(s.id)} disabled={submitting} className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition" title="Salvar">
+                          <Check className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => setEditandoEstoqueId(null)} className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-50 transition" title="Cancelar">
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => { setEditandoEstoqueId(s.id); setEditandoEstoqueValor(String(s.estoque ?? 0)); }}
+                        className={`text-xs px-2 py-0.5 rounded-full font-semibold transition hover:opacity-70 cursor-pointer ${badge.cls}`}
+                        title="Clique para editar o estoque"
+                      >
+                        {badge.label}
+                      </button>
+                    )}
                     <button
                       onClick={() => toggleAtivo(s)}
                       className={`text-xs px-2.5 py-1 rounded-full font-semibold transition ${

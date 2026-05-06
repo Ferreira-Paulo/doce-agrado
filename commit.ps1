@@ -40,13 +40,15 @@ foreach ($padrao in $excluir) {
 Write-Host "`nArquivos no commit:" -ForegroundColor Cyan
 git diff --cached --name-only
 
-# Confirma
-Write-Host "`nCommitar com a mensagem: '$Mensagem' ? (S/n): " -ForegroundColor Yellow -NoNewline
-$confirma = Read-Host
-if ($confirma -eq 'n' -or $confirma -eq 'N') {
-    git reset HEAD -- .
-    Write-Host "Commit cancelado." -ForegroundColor Red
-    exit 0
+# Confirma apenas quando rodando interativamente (sem argumento de mensagem)
+if (-not $PSBoundParameters.ContainsKey('Mensagem')) {
+    Write-Host "`nCommitar com a mensagem: '$Mensagem' ? (S/n): " -ForegroundColor Yellow -NoNewline
+    $confirma = Read-Host
+    if ($confirma -eq 'n' -or $confirma -eq 'N') {
+        git reset HEAD -- .
+        Write-Host "Commit cancelado." -ForegroundColor Red
+        exit 0
+    }
 }
 
 # Faz o commit

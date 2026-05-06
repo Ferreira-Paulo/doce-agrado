@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, Pencil, Trash2, Clock, Package, Banknote, CheckCircle2 } from "lucide-react";
+import { ChevronDown, Pencil, Trash2, Clock, Package, Banknote, CheckCircle2, X } from "lucide-react";
 import { toBRDate, moneyBR } from "@/components/utils/format";
 import { calcEntrega, round2 } from "@/components/utils/calc";
 
@@ -9,15 +9,16 @@ function diasDesde(dateStr) {
   return Math.floor(diff / (1000 * 60 * 60 * 24));
 }
 
-function PaymentTimeline({ entrega, total, saldo, quantidade }) {
-  const pagamentos = [...(Array.isArray(entrega.pagamentos) ? entrega.pagamentos : [])]
-    .sort((a, b) => String(a.data).localeCompare(String(b.data)));
+function PaymentTimeline({ entrega, total, saldo, quantidade, onEditPagamento, onDeletePagamento }) {
+  const rawPagamentos = Array.isArray(entrega.pagamentos) ? entrega.pagamentos : [];
+  const indexed = rawPagamentos.map((p, originalIndex) => ({ ...p, originalIndex }));
+  const sorted = [...indexed].sort((a, b) => String(a.data).localeCompare(String(b.data)));
 
-  const events = pagamentos.reduce(({ balance, items }, p) => {
+  const events = sorted.reduce(({ balance, items }, p) => {
     const newBalance = round2(balance - Number(p.valor || 0));
     return {
       balance: newBalance,
-      items: [...items, { data: p.data, valor: Number(p.valor || 0), saldoApos: newBalance }],
+      items: [...items, { data: p.data, valor: Number(p.valor || 0), saldoApos: newBalance, originalIndex: p.originalIndex }],
     };
   }, { balance: total, items: [] }).items;
 
@@ -41,14 +42,36 @@ function PaymentTimeline({ entrega, total, saldo, quantidade }) {
         </div>
 
         {events.map((ev, i) => (
-          <div key={i} className="flex gap-3 items-start">
+          <div key={i} className="flex gap-3 items-start group">
             <div className="w-5 h-5 rounded-full bg-green-50 border border-green-200 flex items-center justify-center shrink-0 z-10 mt-0.5">
               <Banknote className="w-3 h-3 text-green-600" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-baseline justify-between gap-2">
                 <p className="text-xs font-semibold text-green-700">{moneyBR(ev.valor)} recebido</p>
-                <p className="text-xs text-[#4A0E2E]/40 shrink-0">saldo: {moneyBR(ev.saldoApos)}</p>
+                <div className="flex items-center gap-1 shrink-0">
+                  <p className="text-xs text-[#4A0E2E]/40">saldo: {moneyBR(ev.saldoApos)}</p>
+                  {onEditPagamento && (
+                    <button
+                      type="button"
+                      onClick={() => onEditPagamento(ev.originalIndex, { valor: ev.valor, data: ev.data })}
+                      className="p-0.5 rounded text-[#4A0E2E]/30 hover:text-[#4A0E2E] hover:bg-black/5 transition opacity-0 group-hover:opacity-100"
+                      title="Editar pagamento"
+                    >
+                      <Pencil className="w-3 h-3" />
+                    </button>
+                  )}
+                  {onDeletePagamento && (
+                    <button
+                      type="button"
+                      onClick={() => onDeletePagamento(ev.originalIndex, ev.valor, ev.data)}
+                      className="p-0.5 rounded text-red-300 hover:text-red-600 hover:bg-red-50 transition opacity-0 group-hover:opacity-100"
+                      title="Excluir pagamento"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
               </div>
               <p className="text-xs text-[#4A0E2E]/50">{toBRDate(ev.data)}</p>
             </div>
@@ -91,7 +114,7 @@ function getStatus(total, saldo) {
   return STATUS.pendente;
 }
 
-export default function DeliveryCard({ entrega, onEdit, onDelete }) {
+export default function DeliveryCard({ entrega, onEdit, onDelete, onEditPagamento, onDeletePagamento }) {
   const [showPayments, setShowPayments] = useState(false);
   const { total, totalPago, saldo, quantidade } = calcEntrega(entrega);
   const status = getStatus(total, saldo);
@@ -223,7 +246,7 @@ export default function DeliveryCard({ entrega, onEdit, onDelete }) {
         </button>
 
         {showPayments && (
-          <PaymentTimeline entrega={entrega} total={total} saldo={saldo} quantidade={quantidade} />
+          <PaymentTimeline entrega={entrega} total={total} saldo={saldo} quantidade={quantidade} onEditPagamento={onEditPagamento} onDeletePagamento={onDeletePagamento} />
         )}
       </div>
     </div>

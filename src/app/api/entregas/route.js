@@ -1,6 +1,19 @@
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase/admin";
 import { requireAdmin } from "@/lib/auth/requireAdmin";
+import { FieldValue } from "firebase-admin/firestore";
+
+async function ajustarEstoqueTrufas(itens, fator) {
+  if (!Array.isArray(itens) || itens.length === 0) return;
+  const batch = adminDb.batch();
+  for (const item of itens) {
+    const saborId = item.saborId;
+    if (!saborId) continue;
+    const saborRef = adminDb.collection("sabores").doc(saborId);
+    batch.update(saborRef, { estoque: FieldValue.increment(fator * Number(item.quantidade)) });
+  }
+  await batch.commit();
+}
 
 async function findPartnerUid(parceiro) {
   const ps = await adminDb
@@ -83,7 +96,11 @@ export async function POST(req) {
     const docData = {
       data,
       valor_unitario,
-      itens: itens.map((i) => ({ sabor: String(i.sabor).trim(), quantidade: Number(i.quantidade) })),
+      itens: itens.map((i) => ({
+        sabor: String(i.sabor).trim(),
+        quantidade: Number(i.quantidade),
+        ...(i.saborId ? { saborId: String(i.saborId) } : {}),
+      })),
       pagamentos: [],
       createdAt: new Date().toISOString(),
     };
@@ -91,6 +108,9 @@ export async function POST(req) {
 
     const ref = adminDb.collection("partners").doc(uid).collection("deliveries").doc();
     await ref.set(docData);
+
+    await ajustarEstoqueTrufas(docData.itens, -1);
+
     return NextResponse.json({ success: true, id: ref.id });
   } catch (err) {
     console.error("ENTREGAS POST ERROR:", err);
@@ -114,10 +134,17 @@ export async function PATCH(req) {
 
     const updates = {};
 
+    let itensAntigos = null;
     if (itens !== undefined) {
       const erroItens = validarItens(itens);
       if (erroItens) return NextResponse.json({ success: false, error: erroItens }, { status: 400 });
-      updates.itens = itens.map((i) => ({ sabor: String(i.sabor).trim(), quantidade: Number(i.quantidade) }));
+      const oldSnap = await adminDb.collection("partners").doc(uid).collection("deliveries").doc(deliveryId).get();
+      if (oldSnap.exists) itensAntigos = oldSnap.data().itens || [];
+      updates.itens = itens.map((i) => ({
+        sabor: String(i.sabor).trim(),
+        quantidade: Number(i.quantidade),
+        ...(i.saborId ? { saborId: String(i.saborId) } : {}),
+      }));
     }
     if (valor_unitario !== undefined) {
       const v = Number(valor_unitario);
@@ -140,6 +167,12 @@ export async function PATCH(req) {
     }
 
     await adminDb.collection("partners").doc(uid).collection("deliveries").doc(deliveryId).update(updates);
+
+    if (itensAntigos !== null && updates.itens) {
+      await ajustarEstoqueTrufas(itensAntigos, +1);
+      await ajustarEstoqueTrufas(updates.itens, -1);
+    }
+
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error("ENTREGAS PATCH ERROR:", err);
@@ -161,7 +194,12 @@ export async function DELETE(req) {
     const uid = await findPartnerUid(String(parceiro).toLowerCase().trim());
     if (!uid) return NextResponse.json({ success: false, error: `Parceiro não encontrado: ${parceiro}` }, { status: 404 });
 
-    await adminDb.collection("partners").doc(uid).collection("deliveries").doc(deliveryId).delete();
+    const delRef = adminDb.collection("partners").doc(uid).collection("deliveries").doc(deliveryId);
+    const delSnap = await delRef.get();
+    if (delSnap.exists) {
+      await ajustarEstoqueTrufas(delSnap.data().itens || [], +1);
+    }
+    await delRef.delete();
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error("ENTREGAS DELETE ERROR:", err);

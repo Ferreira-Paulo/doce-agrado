@@ -95,3 +95,80 @@ export async function POST(req) {
     );
   }
 }
+
+export async function PATCH(req) {
+  try {
+    const gate = await requireAdmin(req);
+    if (!gate.ok) return NextResponse.json({ success: false, error: gate.error }, { status: gate.status });
+
+    const body = await req.json();
+    const parceiro = String(body.parceiro || "").toLowerCase().trim();
+    const { deliveryId, index } = body;
+    const valor = Number(body.valor);
+    const data = String(body.data || "");
+
+    if (!parceiro || !deliveryId || typeof index !== "number") {
+      return NextResponse.json({ success: false, error: "parceiro, deliveryId e index são obrigatórios" }, { status: 400 });
+    }
+    if (!Number.isFinite(valor) || valor <= 0) {
+      return NextResponse.json({ success: false, error: "valor inválido" }, { status: 400 });
+    }
+
+    const ps = await adminDb.collection("partners").where("username", "==", parceiro).limit(1).get();
+    if (ps.empty) return NextResponse.json({ success: false, error: `Parceiro não encontrado: ${parceiro}` }, { status: 404 });
+    const uid = ps.docs[0].id;
+
+    const delRef = adminDb.collection("partners").doc(uid).collection("deliveries").doc(deliveryId);
+    const delSnap = await delRef.get();
+    if (!delSnap.exists) return NextResponse.json({ success: false, error: "Entrega não encontrada" }, { status: 404 });
+
+    const pagamentos = Array.isArray(delSnap.data().pagamentos) ? [...delSnap.data().pagamentos] : [];
+    if (index < 0 || index >= pagamentos.length) {
+      return NextResponse.json({ success: false, error: "Índice de pagamento inválido" }, { status: 400 });
+    }
+
+    pagamentos[index] = { valor, data };
+    await delRef.update({ pagamentos });
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error("PAGAMENTOS PATCH ERROR:", err);
+    return NextResponse.json({ success: false, error: err?.message || "Erro interno" }, { status: 500 });
+  }
+}
+
+export async function DELETE(req) {
+  try {
+    const gate = await requireAdmin(req);
+    if (!gate.ok) return NextResponse.json({ success: false, error: gate.error }, { status: gate.status });
+
+    const body = await req.json();
+    const parceiro = String(body.parceiro || "").toLowerCase().trim();
+    const { deliveryId, index } = body;
+
+    if (!parceiro || !deliveryId || typeof index !== "number") {
+      return NextResponse.json({ success: false, error: "parceiro, deliveryId e index são obrigatórios" }, { status: 400 });
+    }
+
+    const ps = await adminDb.collection("partners").where("username", "==", parceiro).limit(1).get();
+    if (ps.empty) return NextResponse.json({ success: false, error: `Parceiro não encontrado: ${parceiro}` }, { status: 404 });
+    const uid = ps.docs[0].id;
+
+    const delRef = adminDb.collection("partners").doc(uid).collection("deliveries").doc(deliveryId);
+    const delSnap = await delRef.get();
+    if (!delSnap.exists) return NextResponse.json({ success: false, error: "Entrega não encontrada" }, { status: 404 });
+
+    const pagamentos = Array.isArray(delSnap.data().pagamentos) ? [...delSnap.data().pagamentos] : [];
+    if (index < 0 || index >= pagamentos.length) {
+      return NextResponse.json({ success: false, error: "Índice de pagamento inválido" }, { status: 400 });
+    }
+
+    pagamentos.splice(index, 1);
+    await delRef.update({ pagamentos });
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error("PAGAMENTOS DELETE ERROR:", err);
+    return NextResponse.json({ success: false, error: err?.message || "Erro interno" }, { status: 500 });
+  }
+}

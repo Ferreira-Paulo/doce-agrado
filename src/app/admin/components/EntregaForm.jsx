@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Plus, X } from "lucide-react";
+import { Plus, X, AlertTriangle, CheckCircle } from "lucide-react";
 import { moneyBR } from "@/components/utils/format";
 
 function Field({ label, children }) {
@@ -34,17 +34,27 @@ export default function EntregaForm({
   }, [novaEntrega.itens, novaEntrega.valor_unitario]);
 
   function addItem() {
-    setNovaEntrega({ ...novaEntrega, itens: [...(novaEntrega.itens || []), { sabor: "", quantidade: "" }] });
+    setNovaEntrega({ ...novaEntrega, itens: [...(novaEntrega.itens || []), { sabor: "", saborId: "", quantidade: "" }] });
   }
 
   function removeItem(idx) {
     const itens = (novaEntrega.itens || []).filter((_, i) => i !== idx);
-    setNovaEntrega({ ...novaEntrega, itens: itens.length > 0 ? itens : [{ sabor: "", quantidade: "" }] });
+    setNovaEntrega({ ...novaEntrega, itens: itens.length > 0 ? itens : [{ sabor: "", saborId: "", quantidade: "" }] });
   }
 
   function updateItem(idx, field, value) {
     const itens = (novaEntrega.itens || []).map((item, i) =>
       i === idx ? { ...item, [field]: value } : item
+    );
+    setNovaEntrega({ ...novaEntrega, itens });
+  }
+
+  function selectSabor(idx, saborId) {
+    const sabor = sabores.find((s) => s.id === saborId);
+    const itens = (novaEntrega.itens || []).map((item, i) =>
+      i === idx
+        ? { ...item, sabor: sabor?.nome ?? "", saborId: saborId }
+        : item
     );
     setNovaEntrega({ ...novaEntrega, itens });
   }
@@ -83,39 +93,76 @@ export default function EntregaForm({
         </div>
 
         <div className="flex flex-col gap-2">
-          {(novaEntrega.itens || []).map((item, idx) => (
-            <div key={idx} className="flex gap-2 items-center">
-              <select
-                value={item.sabor}
-                onChange={(e) => updateItem(idx, "sabor", e.target.value)}
-                className="flex-1 px-3 py-2.5 border border-black/10 rounded-xl text-sm text-[#4A0E2E] bg-white focus:outline-none focus:ring-2 focus:ring-[#D1328C]/30 focus:border-[#D1328C] transition cursor-pointer"
-              >
-                <option value="">Selecione o sabor</option>
-                {saboresAtivos.map((s) => (
-                  <option key={s.id} value={s.nome}>
-                    {s.nome}
-                  </option>
-                ))}
-              </select>
-              <input
-                type="number"
-                min="1"
-                placeholder="Qtd"
-                value={item.quantidade}
-                onChange={(e) => updateItem(idx, "quantidade", e.target.value)}
-                className="w-24 px-3 py-2.5 border border-black/10 rounded-xl text-sm text-[#4A0E2E] bg-white focus:outline-none focus:ring-2 focus:ring-[#D1328C]/30 focus:border-[#D1328C] transition text-center"
-              />
-              {(novaEntrega.itens || []).length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeItem(idx)}
-                  className="p-2 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition shrink-0"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-          ))}
+          {(novaEntrega.itens || []).map((item, idx) => {
+            const saborObj = sabores.find((s) => s.id === item.saborId || s.nome === item.sabor);
+            const estoqueDisp = saborObj?.estoque ?? null;
+            const qtdSolicitada = Number(item.quantidade) || 0;
+            const semEstoque = estoqueDisp !== null && qtdSolicitada > 0 && qtdSolicitada > estoqueDisp;
+
+            return (
+              <div key={idx} className="flex flex-col gap-1">
+                <div className="flex gap-2 items-center">
+                  <select
+                    value={item.saborId || item.sabor || ""}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const byId = saboresAtivos.find((s) => s.id === val);
+                      if (byId) {
+                        selectSabor(idx, byId.id);
+                      } else {
+                        updateItem(idx, "sabor", val);
+                      }
+                    }}
+                    className={`flex-1 px-3 py-2.5 border rounded-xl text-sm text-[#4A0E2E] bg-white focus:outline-none focus:ring-2 focus:ring-[#D1328C]/30 focus:border-[#D1328C] transition cursor-pointer ${
+                      semEstoque ? "border-amber-400" : "border-black/10"
+                    }`}
+                  >
+                    <option value="">Selecione o sabor</option>
+                    {saboresAtivos.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.nome}
+                        {s.estoque !== undefined ? ` (estoque: ${s.estoque})` : ""}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="number"
+                    min="1"
+                    placeholder="Qtd"
+                    value={item.quantidade}
+                    onChange={(e) => updateItem(idx, "quantidade", e.target.value)}
+                    className={`w-24 px-3 py-2.5 border rounded-xl text-sm text-[#4A0E2E] bg-white focus:outline-none focus:ring-2 focus:ring-[#D1328C]/30 focus:border-[#D1328C] transition text-center ${
+                      semEstoque ? "border-amber-400" : "border-black/10"
+                    }`}
+                  />
+                  {(novaEntrega.itens || []).length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeItem(idx)}
+                      className="p-2 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition shrink-0"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+                {estoqueDisp !== null && qtdSolicitada > 0 && (
+                  <div className={`flex items-center gap-1.5 text-xs px-1 ${semEstoque ? "text-amber-600" : "text-green-600"}`}>
+                    {semEstoque ? (
+                      <>
+                        <AlertTriangle className="w-3 h-3 shrink-0" />
+                        Apenas {estoqueDisp} em estoque, precisa de {qtdSolicitada}
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="w-3 h-3 shrink-0" />
+                        {estoqueDisp} em estoque
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
 
         {saboresAtivos.length === 0 && (

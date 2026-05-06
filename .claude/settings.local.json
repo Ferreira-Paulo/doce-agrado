@@ -16,7 +16,8 @@
       "Bash(Select-Object -ExpandProperty FullName)",
       "Bash(Get-ChildItem -Path . -Force)",
       "Bash(Select-Object Name)",
-      "PowerShell(Get-ChildItem -Path \"c:\\\\Users\\\\paulo\\\\Documents\\\\Dev\\\\doce-agrado\" -Recurse | Where-Object { $_.PSIsContainer } | Select-Object -ExpandProperty FullName | Sort-Object)"
+      "PowerShell(Get-ChildItem -Path \"c:\\\\Users\\\\paulo\\\\Documents\\\\Dev\\\\doce-agrado\" -Recurse | Where-Object { $_.PSIsContainer } | Select-Object -ExpandProperty FullName | Sort-Object)",
+      "Bash(git commit *)"
     ]
   }
 }
